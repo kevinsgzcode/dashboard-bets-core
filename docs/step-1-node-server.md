@@ -24,6 +24,17 @@ Understand how to create a simple HTTP server from scratch using pure Node.js (w
 - What `async/await` does and how it makes Node more efficient.
 - What `"utf8"` means and how it decodes raw bytes into readable text.
 
+## Insights / Reflections
+
+- Learned how Node handles HTTP under the hood without any framework.
+- Understood that async/await allows Node to keep handling multiple users while waiting for slow tasks (like file reading).
+- Building this from scratch gave me a clear mental model of how the web works at the lowest level.
+- I am very motivated, I hope to continue like this throughout the entire process.
+
+## Next Step
+
+- The next step will be to create a real API endpoint, and connect it to a SQLite database using SQL queries - no ORM, no abstaction, just logic and understanding
+
 ---
 
 ## I tested the server using the following routes
@@ -64,14 +75,3 @@ server.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
 ```
-
-## Insights / Reflections
-
-- Learned how Node handles HTTP under the hood without any framework.
-- Understood that async/await allows Node to keep handling multiple users while waiting for slow tasks (like file reading).
-- Building this from scratch gave me a clear mental model of how the web works at the lowest level.
-- I am very motivated, I hope to continue like this throughout the entire process.
-
-## Next Step
-
-- The next step will be to create a real API endpoint, and connect it to a SQLite database using SQL queries - no ORM, no abstaction, just logic and understanding

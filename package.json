@@ -1,0 +1,15 @@
+{
+  "name": "dashboardCore",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Kevin Salas",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

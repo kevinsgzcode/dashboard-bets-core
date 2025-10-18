@@ -1,0 +1,12 @@
+[
+  {
+    "team": "Dolphins",
+    "bet": "Win",
+    "odds": 1.75
+  },
+  {
+    "team": "Ravens",
+    "bet": "Over 2.5 Goals",
+    "odds": 1.95
+  }
+]
