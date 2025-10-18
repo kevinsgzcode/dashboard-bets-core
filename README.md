@@ -1,4 +1,5 @@
-# 🧠 BetTracker Core — Raw Node.js Dashboard Project
+# 🧠 Dashboard Bets Core  
+### Learning full-stack development from the ground up
 
 ### 🚀 About the Project
 This repository is part of my journey to build a **sports betting dashboard from scratch** —  
