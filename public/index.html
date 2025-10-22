@@ -1,12 +1,45 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <title>BetTracker Core</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Bets Core</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
   </head>
   <body>
-    <h1>BetTracker Core</h1>
-    <p>Servidor Node con HTML ✅</p>
-    <script src="/public/app.js" type="module"></script>
+    <h1>Dashboard Bets</h1>
+    <section id="picks-seccion">
+      <h2>Stored picks</h2>
+      <div id="loading">Loading picks</div>
+      <table id="picks-table" style="display: none">
+        <!-- Data estructure-->
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Bet type</th>
+            <th>Odd</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="picks-body"></tbody>
+      </table>
+      <section id="new-pick-section">
+        <h2>Add new pick</h2>
+        <form id="new-pick-form">
+          <label for="team">Team:</label>
+          <input type="text" id="team" name="team" required />
+
+          <label for="bet">Bet type:</label>
+          <input type="text" name="bet" id="bet" required />
+
+          <label for="odds">Odds:</label>
+          <input type="number" name="odds" id="odds" step="0.01" required />
+
+          <button type="submit">Add Pick</button>
+        </form>
+        <p id="form-message" style="color: gray"></p>
+      </section>
+    </section>
+    <script src="./assets/main.js"></script>
   </body>
 </html>
