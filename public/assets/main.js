@@ -1,41 +1,52 @@
-//Frontend logic for Dashboard
+// Frontend logic for Dashboard Bets Core
+// Handles full CRUD operations via Fetch API
 
-//Fetch picks from the API and render them in the table
+//Create table row dynamically
+function createRow(pick) {
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td>${pick.team}</td>
+    <td>${pick.bet}</td>
+    <td>${pick.odds}</td>
+    <td>${pick.result}</td>
+    <td>
+      <button class="edit-btn" data-id="${pick.id}">Edit</button>
+      <button class="delete-btn" data-id="${pick.id}">Delete</button>
+    </td>
+  `;
+  return row;
+}
+
+//Load all picks and render in the table
 async function loadPicks() {
   const loading = document.getElementById("loading");
   const table = document.getElementById("picks-table");
   const tbody = document.getElementById("picks-body");
 
   try {
-    //Fetch data from backen API
+    // Fetch data from backend API
     const response = await fetch("/api/picks");
     if (!response.ok) throw new Error("Failed to load picks");
 
     const picks = await response.json();
 
-    //clean previuos rows
-    tbody.innerHTML = "";
+    // Clear and repopulate rows safely
+    tbody.replaceChildren(); //keeps the same <tbody> reference (listeners stay alive)
 
-    //render picks in table
-    picks.forEach((pick) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `<td>${pick.team}</td>
-        <td>${pick.bet}</td>
-        <td>${pick.odds}</td>
-        <td>${pick.result}</td>`;
-      tbody.appendChild(row);
-    });
+    // Render all picks dynamically
+    picks.forEach((pick) => tbody.appendChild(createRow(pick)));
 
-    //show table and hide loading text
+    // Show table and hide loading text
     loading.style.display = "none";
     table.style.display = "table";
   } catch (error) {
     loading.textContent = "Error loading picks";
-    console.log(error);
+    console.error(error);
   }
 }
 
-//Handle formsubmission (new pick)
+//Handle form submission (Create new pick)
+
 async function createPick(event) {
   event.preventDefault();
 
@@ -44,6 +55,7 @@ async function createPick(event) {
   const odds = parseFloat(document.getElementById("odds").value);
   const message = document.getElementById("form-message");
 
+  // Basic form validation
   if (!team || !bet || isNaN(odds)) {
     message.textContent = "Please fill all fields correctly";
     message.style.color = "red";
@@ -60,31 +72,85 @@ async function createPick(event) {
     if (!response.ok) throw new Error("Failed to create pick");
 
     const result = await response.json();
-    console.log("Created:", result);
 
-    //Add new pick to the table dynamically
+    //Append new row directly instead of reloading entire table
     const tbody = document.getElementById("picks-body");
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${result.pick.team}</td>
-    <td>${result.pick.bet}</td>
-    <td>${result.pick.odds}</td>
-    <td>${result.pick.result}</td>`;
-    tbody.prepend(row);
+    tbody.prepend(createRow(result.pick)); //adds pick instantly
 
     message.textContent = "✅ Pick added successfully!";
     message.style.color = "green";
     document.getElementById("new-pick-form").reset();
   } catch (err) {
-    console.log(err);
+    console.error(err);
     message.textContent = "Error adding pick";
     message.style.color = "red";
   }
 }
 
-//run when page loads
+//PUT - Update result of a pick
+async function updatePick(id, result) {
+  try {
+    const response = await fetch(`/api/picks/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ result }),
+    });
+
+    if (!response.ok) throw new Error("Failed to update pick");
+
+    console.log("Pick updated:", await response.json());
+    await loadPicks(); //Refresh table to reflect change
+  } catch (err) {
+    console.error(err);
+    alert("Error updating pick");
+  }
+}
+
+//DELETE - Remove pick
+async function deletePick(id) {
+  try {
+    const response = await fetch(`/api/picks/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Failed to delete pick");
+
+    console.log("Pick deleted:", await response.json());
+    await loadPicks(); //Reload table to reflect removal
+  } catch (err) {
+    console.error(err);
+    alert("Error deleting pick");
+  }
+}
+
+//DOMContentLoaded — Initialize once
 document.addEventListener("DOMContentLoaded", () => {
-  loadPicks();
+  const tbody = document.getElementById("picks-body");
+
+  //Fixed typo: "click" instead of "clik"
+  //Event delegation for Edit/Delete (attached ONCE)
+  tbody.addEventListener("click", async (e) => {
+    const target = e.target;
+    const id = target.dataset.id;
+
+    // Handle Edit
+    if (target.classList.contains("edit-btn")) {
+      const newResult = prompt("Enter new result (won/lost/pending):");
+      if (newResult) await updatePick(id, newResult.trim());
+    }
+
+    // Handle Delete
+    if (target.classList.contains("delete-btn")) {
+      const confirmDelete = confirm("Delete this pick?");
+      if (confirmDelete) await deletePick(id);
+    }
+  });
+
+  // Handle form submission for new picks
   document
     .getElementById("new-pick-form")
     .addEventListener("submit", createPick);
+
+  // Load initial data
+  loadPicks();
 });

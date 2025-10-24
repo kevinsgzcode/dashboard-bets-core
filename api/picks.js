@@ -70,6 +70,80 @@ export async function handlePicks(req, res) {
       });
       return; //stop here, response will be sent in 'end'
     }
+
+    //PUT - update an existing pick
+    if (req.method === "PUT") {
+      const id = req.url.split("/").pop(); //Extract ID from url
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", async () => {
+        try {
+          const data = JSON.parse(body || "{}");
+          const { result, odds } = data;
+
+          if (!result && !odds) {
+            return sendJSON(res, 400, { error: "No valid fields to update" });
+          }
+          const db = await getDb();
+
+          //build the sql query dynamically based on provided fields
+          const fields = [];
+          const values = [];
+
+          if (result) {
+            fields.push("result = ?");
+            values.push(result);
+          }
+          if (odds) {
+            fields.push("odds = ?");
+            values.push(odds);
+          }
+          values.push(id);
+
+          const sql = `UPDATE picks SET ${fields.join(",")} WHERE id = ?`;
+          const { changes } = await db.run(sql, values);
+
+          if (changes === 0) {
+            return sendJSON(res, 404, { error: "Pick not found" });
+          }
+
+          const updated = await db.get(
+            "SELECT id, team, bet, odds, result FROM picks WHERE id = ?",
+            id
+          );
+
+          return sendJSON(res, 200, {
+            message: "Pick updated",
+            pick: updated,
+          });
+        } catch (err) {
+          console.log("PUT /api/picks error:", err);
+          return sendJSON(res, 400, { error: "Invalid JSON bdoy" });
+        }
+      });
+      return;
+    }
+
+    //Delete - Remove a pick
+
+    if (req.method === "DELETE") {
+      const id = req.url.split("/").pop();
+      try {
+        const db = await getDb();
+        const { changes } = await db.run("DELETE FROM picks WHERE id = ?", id);
+
+        if (changes === 0) {
+          return sendJSON(res, 400, { error: "Pick not found" });
+        }
+        return sendJSON(res, 200, {
+          message: `Pick ${id} deleted successfully`,
+        });
+      } catch (err) {
+        console.error("DELETE /api/picks error:", err);
+        return sendJSON(res, 500, { error: "Internal server error" });
+      }
+    }
+
     //Method not allowed
     res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8" });
     res.end("Method not Allowed");
