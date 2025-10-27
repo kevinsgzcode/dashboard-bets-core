@@ -2,6 +2,7 @@
 import http from "http";
 import fs from "fs/promises";
 import { handlePicks } from "./api/picks.js";
+import { handleStats } from "./api/stats.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -17,6 +18,11 @@ const server = http.createServer(async (req, res) => {
   //Handle API routes
   if (req.url.startsWith("/api/picks")) {
     return handlePicks(req, res);
+  }
+
+  //Handle stats
+  if (req.url.startsWith("/api/stats")) {
+    return handleStats(req, res);
   }
 
   // Ignore Chrome DevTools and favicon requests

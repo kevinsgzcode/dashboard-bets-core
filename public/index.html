@@ -9,8 +9,28 @@
   <body>
     <h1>Dashboard Bets</h1>
     <section id="picks-seccion">
-      <h2>Stored picks</h2>
       <div id="loading">Loading picks</div>
+      <!-- Bank tracker -->
+      <section id="stats-panel" style="display: none">
+        <h2>Bank Overview</h2>
+        <div class="stats-grid">
+          <div>
+            <strong>Initial Bank:</strong> <span id="initial-bank">$0</span>
+          </div>
+          <div>
+            <strong>Current Bank:</strong> <span id="current-bank">$0</span>
+          </div>
+          <div>
+            <strong>Total stake:</strong> <span id="total-stake">$0</span>
+          </div>
+          <div>
+            <strong>Profit/Loss</strong> <span id="total-profitloss">$0</span>
+          </div>
+          <div><strong>ROI:</strong> <span id="roi">0%</span></div>
+        </div>
+      </section>
+      <!-- Table -->
+      <h2>Stored picks</h2>
       <table id="picks-table" style="display: none">
         <thead>
           <tr>

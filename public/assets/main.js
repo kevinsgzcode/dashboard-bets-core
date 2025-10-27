@@ -1,6 +1,36 @@
 // Frontend logic for Dashboard Bets Core
 // Handles full CRUD operations via Fetch API
 
+//Fetch and display global stats
+async function loadStats() {
+  try {
+    const res = await fetch("/api/stats");
+    if (!res.ok) throw new Error("Failed to load stats");
+
+    const data = await res.json();
+
+    //Update UI
+    document.getElementById(
+      "initial-bank"
+    ).textContent = `$${data.initialBank.toFixed(2)}`;
+    document.getElementById(
+      "current-bank"
+    ).textContent = `$${data.currentBank.toFixed(2)}`;
+    document.getElementById(
+      "total-stake"
+    ).textContent = `$${data.totalStake.toFixed(2)}`;
+    document.getElementById(
+      "total-profitloss"
+    ).textContent = `$${data.totalProfitLoss.toFixed(2)}`;
+    document.getElementById("roi").textContent = `${data.ROI}%`;
+
+    //show the panel
+    document.getElementById("stats-panel").style.display = "block";
+  } catch (err) {
+    console.error("Error loading stats:", err);
+  }
+}
+
 //Create table row dynamically
 function createRow(pick) {
   const row = document.createElement("tr");
@@ -91,6 +121,7 @@ async function createPick(event) {
     message.textContent = "✅ Pick added successfully!";
     message.style.color = "green";
     document.getElementById("new-pick-form").reset();
+    await loadStats();
   } catch (err) {
     console.error(err);
     message.textContent = "Error adding pick";
@@ -111,6 +142,7 @@ async function updatePick(id, result) {
 
     console.log("Pick updated:", await response.json());
     await loadPicks(); //Refresh table to reflect change
+    await loadStats(); //refresh stats
   } catch (err) {
     console.error(err);
     alert("Error updating pick");
@@ -128,6 +160,7 @@ async function deletePick(id) {
 
     console.log("Pick deleted:", await response.json());
     await loadPicks(); //Reload table to reflect removal
+    await loadStats(); //Reload stats
   } catch (err) {
     console.error(err);
     alert("Error deleting pick");
@@ -164,4 +197,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load initial data
   loadPicks();
+  loadStats();
 });
