@@ -15,7 +15,7 @@ h1 {
 }
 
 h2 {
-  font-size: 2.2rem;
+  font-size: 1.8rem;
   margin-top: 20px;
   margin-bottom: 10px;
 }
@@ -25,6 +25,10 @@ table {
   border-collapse: collapse; /* ensure borders join neatly */
   width: 100%;
   max-width: 800px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 th,
@@ -35,7 +39,7 @@ td {
 }
 
 th:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #fafafa;
 }
 
 #loading {
@@ -44,21 +48,75 @@ th:nth-child(even) {
 }
 
 button {
-  padding: 6px 10px;
+  padding: 6px 12px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease-in-out;
 }
 
 .edit-btn {
   background-color: #4caf50;
   color: white;
+  font-weight: 500;
+}
+
+.edit-btn:hover {
+  background-color: #43a047;
+  transform: translateY(-1px);
 }
 
 .delete-btn {
   background-color: #f44336;
   color: white;
+  font-weight: 500;
   margin-left: 6px;
+}
+
+.delete-btn:hover {
+  background-color: #e53935;
+  transform: translateY(-1px);
+}
+
+td button {
+  margin-right: 4px;
+  display: inline-block;
+}
+
+form {
+  margin-top: 20px;
+}
+
+label {
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+input {
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+input:focus {
+  border-color: #4caf50;
+  outline: none;
+}
+
+#form-message {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.success {
+  color: #28a745;
+}
+
+.error {
+  color: #e53935;
 }
 
 button:hover {

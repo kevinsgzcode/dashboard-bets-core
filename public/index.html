@@ -17,12 +17,16 @@
             <th>Team</th>
             <th>Bet type</th>
             <th>Odd</th>
+            <th>Stake</th>
+            <th>Possible Win</th>
+            <th>Profit / Loss</th>
             <th>Result</th>
-            <th></th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="picks-body"></tbody>
       </table>
+
       <section id="new-pick-section">
         <h2>Add new pick</h2>
         <form id="new-pick-form">
@@ -34,6 +38,11 @@
 
           <label for="odds">Odds:</label>
           <input type="number" name="odds" id="odds" step="0.01" required />
+
+          <label>
+            Stake:
+            <input type="number" step="0.01" id="stake" required />
+          </label>
 
           <button type="submit">Add Pick</button>
         </form>

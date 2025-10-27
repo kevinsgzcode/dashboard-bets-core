@@ -10,16 +10,16 @@ export async function handlePicks(req, res) {
   try {
     const db = await getDb();
 
+    //Get all picks
     if (req.method === "GET") {
-      //Get all picks
       const rows = await db.all(
-        "SELECT id, team, bet, odds, result FROM picks ORDER BY id DESC"
+        "SELECT id, team, bet, odds, stake, possibleWin, profitLoss, result FROM picks ORDER BY id DESC"
       );
       return sendJSON(res, 200, rows);
     }
 
+    //POST - Create New pick
     if (req.method === "POST") {
-      //Read streaming body
       let body = "";
       req.on("data", (chunk) => (body += chunk));
       req.on("end", async () => {
@@ -27,13 +27,12 @@ export async function handlePicks(req, res) {
           console.log("RAW BODY:", body);
           const parsed = JSON.parse(body || "{}");
           console.log("PARSED:", parsed, "typeof odds:", typeof parsed.odds);
-          const { team, bet, odds, result = "pending" } = parsed;
+          let { team, bet, odds, stake = 0, result = "pending" } = parsed;
 
-          //ensuer proper types
-
-          // Coerce: ensure proper types
+          // Normalize values
           if (typeof team !== "string") team = String(team ?? "").trim();
           if (typeof bet !== "string") bet = String(bet ?? "").trim();
+          stake = parseFloat(stake);
 
           // takes "1.95" o "1,95" o 1.95
           let numOdds;
@@ -46,19 +45,35 @@ export async function handlePicks(req, res) {
             numOdds = Number(normalized);
           }
 
-          if (!team || !bet || Number.isNaN(numOdds)) {
+          if (!team || !bet || Number.isNaN(numOdds) || Number.isNaN(stake)) {
             return sendJSON(res, 400, {
               error:
                 "Invalid body. Expected { team: string, bet: string, odds: number, result?: string }",
             });
           }
-          // Parameterized INSERT prevents SQL inkection
-          const sql =
-            "INSERT INTO picks (team, bet, odds, result) VALUES (?, ?, ?, ?)";
-          const { lastID } = await db.run(sql, team, bet, numOdds, result);
+          //Calculate derived values
+          const possibleWin = stake * numOdds;
+          let profitLoss = 0;
+
+          if (result === "won") profitLoss = possibleWin - stake;
+          else if (result === "lost") profitLoss = -stake;
+
+          // Insert pick with new fields
+          const sql = `
+          INSERT INTO picks (team, bet, odds, stake, possibleWin, profitLoss, result) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)`;
+          const { lastID } = await db.run(sql, [
+            team,
+            bet,
+            numOdds,
+            stake,
+            possibleWin,
+            profitLoss,
+            result,
+          ]);
 
           const created = await db.get(
-            "SELECT id, team, bet, odds, result FROM picks WHERE id = ?",
+            "SELECT * FROM picks WHERE id = ?",
             lastID
           );
 
@@ -73,52 +88,46 @@ export async function handlePicks(req, res) {
 
     //PUT - update an existing pick
     if (req.method === "PUT") {
-      const id = req.url.split("/").pop(); //Extract ID from url
+      const id = req.url.split("/").pop();
       let body = "";
       req.on("data", (chunk) => (body += chunk));
       req.on("end", async () => {
         try {
           const data = JSON.parse(body || "{}");
-          const { result, odds } = data;
+          const { result, odds, stake } = data;
 
-          if (!result && !odds) {
-            return sendJSON(res, 400, { error: "No valid fields to update" });
-          }
-          const db = await getDb();
+          const pick = await db.get("SELECT * FROM picks WHERE id = ?", id);
+          if (!pick) return sendJSON(res, 404, { error: "Pick not found" });
 
-          //build the sql query dynamically based on provided fields
-          const fields = [];
-          const values = [];
+          //updated fields
+          const newOdds = odds ?? pick.odds;
+          const newStake = stake ?? pick.stake;
+          const possibleWin = newStake * newOdds;
+          let profitLoss = pick.profitLoss;
 
-          if (result) {
-            fields.push("result = ?");
-            values.push(result);
-          }
-          if (odds) {
-            fields.push("odds = ?");
-            values.push(odds);
-          }
-          values.push(id);
+          if (result === "won") profitLoss = possibleWin - newStake;
+          else if (result === "lost") profitLoss = -newStake;
+          else if (result === "pendig") profitLoss = 0;
 
-          const sql = `UPDATE picks SET ${fields.join(",")} WHERE id = ?`;
-          const { changes } = await db.run(sql, values);
+          //update record
+          const sql = `UPDATE picks SET result = ?, odds = ?, stake = ?, possibleWin = ?, profitLoss = ? WHERE id = ?`;
+          await db.run(sql, [
+            result ?? pick.result,
+            newOdds,
+            newStake,
+            possibleWin,
+            profitLoss,
+            id,
+          ]);
 
-          if (changes === 0) {
-            return sendJSON(res, 404, { error: "Pick not found" });
-          }
-
-          const updated = await db.get(
-            "SELECT id, team, bet, odds, result FROM picks WHERE id = ?",
-            id
-          );
-
+          const updated = await db.get("SELECT * FROM picks WHERE id = ?", id);
           return sendJSON(res, 200, {
-            message: "Pick updated",
+            message: "Picks updated",
             pick: updated,
           });
         } catch (err) {
-          console.log("PUT /api/picks error:", err);
-          return sendJSON(res, 400, { error: "Invalid JSON bdoy" });
+          console.error("PUT /api/picks error", err);
+          return sendJSON(res, 400, { error: "Invalid JSON body" });
         }
       });
       return;

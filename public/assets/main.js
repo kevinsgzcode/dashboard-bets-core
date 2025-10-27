@@ -4,10 +4,20 @@
 //Create table row dynamically
 function createRow(pick) {
   const row = document.createElement("tr");
+
+  //Format Profit/Loss
+  const profitColor =
+    pick.profitLoss > 0 ? "green" : pick.profitLoss < 0 ? "red" : "gray";
+
   row.innerHTML = `
     <td>${pick.team}</td>
     <td>${pick.bet}</td>
-    <td>${pick.odds}</td>
+    <td>${pick.odds.toFixed(2)}</td>
+    <td>${pick.stake?.toFixed(2) ?? 0} </td>
+    <td>${pick.possibleWin?.toFixed(2) ?? 0}</td>
+    <td style="color:${profitColor}; font-weight:500;">${
+    pick.profitLoss?.toFixed(2) ?? 0
+  }</td>
     <td>${pick.result}</td>
     <td>
       <button class="edit-btn" data-id="${pick.id}">Edit</button>
@@ -45,7 +55,7 @@ async function loadPicks() {
   }
 }
 
-//Handle form submission (Create new pick)
+//Handle form submission (Create new pick with stake)
 
 async function createPick(event) {
   event.preventDefault();
@@ -53,10 +63,11 @@ async function createPick(event) {
   const team = document.getElementById("team").value.trim();
   const bet = document.getElementById("bet").value.trim();
   const odds = parseFloat(document.getElementById("odds").value);
+  const stake = parseFloat(document.getElementById("stake").value);
   const message = document.getElementById("form-message");
 
   // Basic form validation
-  if (!team || !bet || isNaN(odds)) {
+  if (!team || !bet || isNaN(odds) || isNaN(stake)) {
     message.textContent = "Please fill all fields correctly";
     message.style.color = "red";
     return;
@@ -66,7 +77,7 @@ async function createPick(event) {
     const response = await fetch("/api/picks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ team, bet, odds }),
+      body: JSON.stringify({ team, bet, odds, stake }),
     });
 
     if (!response.ok) throw new Error("Failed to create pick");
