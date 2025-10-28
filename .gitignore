@@ -1,3 +1,74 @@
-node_modules
-data.sqlite
+# =============================
+# Node.js core
+# =============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =============================
+# Build / temp / cache
+# =============================
+dist/
+build/
+.cache/
+.temp/
+coverage/
+.DS_Store
+
+# =============================
+# Environment variables
+# =============================
 .env
+.env.local
+.env.*.local
+
+# =============================
+# Database files
+# =============================
+db/database.db
+db/*.sqlite
+*.db
+*.sqlite
+
+# =============================
+# Logs
+# =============================
+logs/
+*.log
+*.out
+*.pid
+*.seed
+
+# =============================
+# System files
+# =============================
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# =============================
+# Backups / archives
+# =============================
+*.bak
+*.old
+*.orig
+*.zip
+*.tar.gz
+
+# =============================
+# Temporary uploads or test data
+# =============================
+uploads/
+tmp/
+temp/
+test-output/
+__pycache__/
+
+# =============================
+# OS / Editor specific
+# =============================
+.DS_Store
+*.iml
