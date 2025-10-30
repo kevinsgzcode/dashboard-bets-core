@@ -5,6 +5,8 @@ import { handlePicks } from "./api/picks.js";
 import { handleStats } from "./api/stats.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { handleScores } from "./api/scores.js";
+import { setupDataBase } from "./db/setup.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +20,11 @@ const server = http.createServer(async (req, res) => {
   //Handle API routes
   if (req.url.startsWith("/api/picks")) {
     return handlePicks(req, res);
+  }
+
+  //handle scores
+  if (req.url.startsWith("/api/scores")) {
+    return handleScores(req, res);
   }
 
   //Handle stats
@@ -61,6 +68,10 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+//Auto-setup before starting the server
+(async () => {
+  await setupDataBase(); //ensure DB & table exist
+  server.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+})();

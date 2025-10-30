@@ -13,6 +13,6 @@ export async function getDb() {
     filename: "./db/database.db",
     driver: sqlite3.Database,
   });
-  console.log("Connected to SQLite database");
   return _db;
 }
+console.log("💾 Connected to SQLite database");
