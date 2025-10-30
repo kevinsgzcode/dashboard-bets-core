@@ -65,23 +65,38 @@ export async function handleScores(req, res) {
       return res.end(JSON.stringify({ error: "No recent events found" }));
     }
 
-    //Determine win/loss
+    // Determine win/loss
     const homeTeam = event.strHomeTeam;
-    const awayTeam = event.srtAwayTeam;
+    const awayTeam = event.strAwayTeam;
     const homeScore = Number(event.intHomeScore);
     const awayScore = Number(event.intAwayScore);
 
     let result = "pending";
-    if (event.strStatus === "Match Finished") {
+
+    //Normalize values and safely determine if match is finished
+    const status = (event.strStatus || "").toLowerCase();
+    const isFinished =
+      status.includes("match finished") ||
+      status.includes("ft") ||
+      status.includes("ended") ||
+      status.includes("full") ||
+      (homeScore >= 0 && awayScore >= 0);
+
+    if (isFinished) {
+      const normalizedTeam = team.toLowerCase();
+      const homeNormalized = homeTeam.toLowerCase();
+      const awayNormalized = awayTeam.toLowerCase();
+
       if (
-        (team === homeTeam && homeScore > awayScore) ||
-        (team === awayTeam && awayScore > homeScore)
+        (homeNormalized.includes(normalizedTeam) && homeScore > awayScore) ||
+        (awayNormalized.includes(normalizedTeam) && awayScore > homeScore)
       ) {
         result = "won";
       } else {
         result = "lost";
       }
     }
+
     //Send response
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
@@ -95,9 +110,11 @@ export async function handleScores(req, res) {
         result,
       })
     );
+    //Console to debug
+    console.log(`✅ [SCORES] ${team} → ${result} (${homeScore}-${awayScore})`);
   } catch (err) {
     console.error("Error fetching score:", err);
-    res.writeHead(500, { "Content - Type": "application/json" });
+    res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Failed to fetch scores" }));
   }
 }
