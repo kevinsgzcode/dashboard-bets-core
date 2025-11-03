@@ -7,6 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { handleScores } from "./api/scores.js";
 import { setupDataBase } from "./db/setup.js";
+import { handleUpdateResults } from "./api/updateResults.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,11 @@ const server = http.createServer(async (req, res) => {
   //handle scores
   if (req.url.startsWith("/api/scores")) {
     return handleScores(req, res);
+  }
+
+  //handle Update Results
+  if (req.url.startsWith("/api/update-results")) {
+    return handleUpdateResults(req, res);
   }
 
   //Handle stats
@@ -68,9 +74,30 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+//Fuction to auto-update pending picks at startup
+async function autoUpdatePicks() {
+  try {
+    console.log("🔄 Checking pending pick");
+    // Simulate an internal GET request to /api/update-result
+    const fakeReq = { method: "GET", url: "/api/update-results", headers: {} };
+    const fakeRes = {
+      writeHead: () => {},
+      end: (msg) => {
+        console.log("✅ Auto-Update response:", msg);
+      },
+    };
+    await handleUpdateResults(fakeReq, fakeRes);
+    console.log("Auto-Update completed succesfully");
+  } catch (err) {
+    console.error("Auto-Update error:", err);
+  }
+}
+
 //Auto-setup before starting the server
 (async () => {
   await setupDataBase(); //ensure DB & table exist
+  await autoUpdatePicks(); //run auto-update after DB is ready
+
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
