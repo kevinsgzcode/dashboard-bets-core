@@ -13,10 +13,26 @@ export function setupDataBase() {
     stake REAL DEFAULT 0,
     possibleWin REAL DEFAULT 0,
     profitLoss REAL DEFAULT 0,
-    result TEXT DEFAULT 'pending'
+    result TEXT DEFAULT 'pending',
+    league TEXT DEFAULT 'NFL',
+    match_date TEXT
     )
     `);
+
+  //Check if new columns exist
+  console.log("✅ Table 'picks' created or verified");
+
+  const pragma = db.prepare("PRAGMA table_info(picks)").all();
+  const columns = pragma.map((col) => col.name);
+
+  if (!columns.includes("league")) {
+    db.exec(`ALTER TABLE picks ADD COLUMN league TEXT DEFAULT 'NFL'`);
+    console.log("New column 'league' added");
+  }
+  if (!columns.includes("match_date")) {
+    db.exec(`ALTER TABLE picks ADD COLUMN match_date TEXT`);
+    console.log("New Column 'match_date' added");
+  }
 }
 
 setupDataBase();
-console.log("✅ Table 'picks' created (if not already exists)");

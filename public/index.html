@@ -57,8 +57,16 @@
       <section id="new-pick-section">
         <h2>Add new pick</h2>
         <form id="new-pick-form">
+          <label for="league">League:</label>
+          <select id="league" name="league" required>
+            <option value="">Select a league</option>
+            <option value="NFL">NFL</option>
+          </select>
+
           <label for="team">Team:</label>
-          <input type="text" id="team" name="team" required />
+          <select id="team" name="team" required>
+            <option value="">Select a team</option>
+          </select>
 
           <label for="bet">Bet type:</label>
           <input type="text" name="bet" id="bet" required />
@@ -66,17 +74,18 @@
           <label for="odds">Odds:</label>
           <input type="number" name="odds" id="odds" step="0.01" required />
 
-          <label>
-            Stake:
-            <input type="number" step="0.01" id="stake" required />
-          </label>
+          <label for="stake">Stake:</label>
+          <input type="number" step="0.01" id="stake" required />
 
-          <button type="submit" class="add-btn">Add Pick</button>
+          <label for="match_date">Match date:</label>
+          <input type="date" id="match_date" name="match_date" required />
+
+          <button type="submit">Add Pick</button>
         </form>
         <p id="form-message" style="color: gray"></p>
       </section>
     </section>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="./assets/main.js"></script>
+    <script src="./assets/main.js" defer></script>
   </body>
 </html>

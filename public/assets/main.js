@@ -94,9 +94,11 @@ async function createPick(event) {
   const odds = parseFloat(document.getElementById("odds").value);
   const stake = parseFloat(document.getElementById("stake").value);
   const message = document.getElementById("form-message");
+  const league = document.getElementById("league").value;
+  const match_date = document.getElementById("match_date").value;
 
   // Basic form validation
-  if (!team || !bet || isNaN(odds) || isNaN(stake)) {
+  if (!team || !bet || isNaN(odds) || isNaN(stake) || !league || !match_date) {
     message.textContent = "Please fill all fields correctly";
     message.style.color = "red";
     return;
@@ -106,7 +108,7 @@ async function createPick(event) {
     const response = await fetch("/api/picks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ team, bet, odds, stake }),
+      body: JSON.stringify({ team, bet, odds, stake, league, match_date }),
     });
 
     if (!response.ok) throw new Error("Failed to create pick");
@@ -230,6 +232,85 @@ async function loadChart() {
 //DOMContentLoaded — Initialize once
 document.addEventListener("DOMContentLoaded", () => {
   const tbody = document.getElementById("picks-body");
+
+  //Load NFL teams
+  document.getElementById("league").addEventListener("change", async (e) => {
+    const league = e.target.value;
+    if (!league) return;
+
+    const teamSelect = document.getElementById("team");
+    teamSelect.innerHTML = "<option value=''>Loading teams...</option>";
+
+    //Local fallback
+    const nflTeams = [
+      "Arizona Cardinals",
+      "Atlanta Falcons",
+      "Baltimore Ravens",
+      "Buffalo Bills",
+      "Carolina Panthers",
+      "Chicago Bears",
+      "Cincinnati Bengals",
+      "Cleveland Browns",
+      "Dallas Cowboys",
+      "Denver Broncos",
+      "Detroit Lions",
+      "Green Bay Packers",
+      "Houston Texans",
+      "Indianapolis Colts",
+      "Jacksonville Jaguars",
+      "Kansas City Chiefs",
+      "Las Vegas Raiders",
+      "Los Angeles Chargers",
+      "Los Angeles Rams",
+      "Miami Dolphins",
+      "Minnesota Vikings",
+      "New England Patriots",
+      "New Orleans Saints",
+      "New York Giants",
+      "New York Jets",
+      "Philadelphia Eagles",
+      "Pittsburgh Steelers",
+      "San Francisco 49ers",
+      "Seattle Seahawks",
+      "Tampa Bay Buccaneers",
+      "Tennessee Titans",
+      "Washington Commanders",
+    ];
+
+    try {
+      const leagueName = league === "NFL" ? "National Football League" : league;
+      const res = await fetch(
+        `https://www.thesportsdb.com/api/v1/json/3/search_all_teams.php?l=${encodeURIComponent(
+          leagueName
+        )}`
+      );
+
+      const data = await res.json();
+
+      let teams = [];
+
+      //Usea API if available, otherwise fallback
+      if (Array.isArray(data.teams)) {
+        teams = data.teams.map((t) => t.strTeam);
+        console.log(`Loaded ${teams.length} teams from API`);
+      } else {
+        teams = nflTeams;
+        console.warn("API returned null, using local fallback list");
+      }
+
+      //Show options
+      teamSelect.innerHTML = "<option value=''>Select a team</option>";
+      teams.forEach((team) => {
+        const option = document.createElement("option");
+        option.value = team;
+        option.textContent = team;
+        teamSelect.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Error loading teams:", err);
+      teamSelect.innerHTML = "<option value=''>Error loading teams</option>";
+    }
+  });
 
   //Event delegation for Delete (attached ONCE)
   tbody.addEventListener("click", async (e) => {

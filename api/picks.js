@@ -12,9 +12,11 @@ export async function handlePicks(req, res) {
 
     //Get all picks
     if (req.method === "GET") {
-      const rows = db.prepare(
-        "SELECT id, team, bet, odds, stake, possibleWin, profitLoss, result FROM picks ORDER BY id DESC"
-      ).all();
+      const rows = db
+        .prepare(
+          "SELECT id, team, bet, odds, stake, possibleWin, profitLoss, result FROM picks ORDER BY id DESC"
+        )
+        .all();
       return sendJSON(res, 200, rows);
     }
 
@@ -26,12 +28,22 @@ export async function handlePicks(req, res) {
         try {
           console.log("RAW BODY:", body);
           const parsed = JSON.parse(body || "{}");
-          console.log("PARSED:", parsed, "typeof odds:", typeof parsed.odds);
-          let { team, bet, odds, stake = 0, result = "pending" } = parsed;
+          console.log("PARSED:", parsed);
+          let {
+            team,
+            bet,
+            odds,
+            stake = 0,
+            result = "pending",
+            league = "NFL",
+            match_date,
+          } = parsed;
 
           // Normalize values
           if (typeof team !== "string") team = String(team ?? "").trim();
           if (typeof bet !== "string") bet = String(bet ?? "").trim();
+          if (typeof league !== "string") league = String(league ?? "").trim();
+
           stake = parseFloat(stake);
 
           // takes "1.95" o "1,95" o 1.95
@@ -45,36 +57,49 @@ export async function handlePicks(req, res) {
             numOdds = Number(normalized);
           }
 
-          if (!team || !bet || Number.isNaN(numOdds) || Number.isNaN(stake)) {
+          //Validate all required fields
+
+          if (
+            !team ||
+            !bet ||
+            Number.isNaN(numOdds) ||
+            Number.isNaN(stake) ||
+            !league ||
+            !match_date
+          ) {
             return sendJSON(res, 400, {
               error:
                 "Invalid body. Expected { team: string, bet: string, odds: number, result?: string }",
             });
           }
+
           //Calculate derived values
           const possibleWin = stake * numOdds;
           let profitLoss = 0;
-
           if (result === "won") profitLoss = possibleWin - stake;
           else if (result === "lost") profitLoss = -stake;
 
           // Insert pick with new fields
           const sql = `
-          INSERT INTO picks (team, bet, odds, stake, possibleWin, profitLoss, result) 
-          VALUES (?, ?, ?, ?, ?, ?, ?)`;
-          const info = db.prepare(sql).run(
-            team,
-            bet,
-            numOdds,
-            stake,
-            possibleWin,
-            profitLoss,
-            result
-          );
+          INSERT INTO picks (team, bet, odds, stake, possibleWin, profitLoss, result, league, match_date) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          const info = db
+            .prepare(sql)
+            .run(
+              team,
+              bet,
+              numOdds,
+              stake,
+              possibleWin,
+              profitLoss,
+              result,
+              league,
+              match_date
+            );
 
-          const created = db.prepare(
-            "SELECT * FROM picks WHERE id = ?"
-          ).get(info.lastInsertRowid);
+          const created = db
+            .prepare("SELECT * FROM picks WHERE id = ?")
+            .get(info.lastInsertRowid);
 
           return sendJSON(res, 201, { message: "Pick created", pick: created });
         } catch (e) {
@@ -119,7 +144,9 @@ export async function handlePicks(req, res) {
             id
           );
 
-          const updated = db.prepare("SELECT * FROM picks WHERE id = ?").get(id);
+          const updated = db
+            .prepare("SELECT * FROM picks WHERE id = ?")
+            .get(id);
           return sendJSON(res, 200, {
             message: "Picks updated",
             pick: updated,
