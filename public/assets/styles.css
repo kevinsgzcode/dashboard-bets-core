@@ -1,152 +1,166 @@
-/* Basci layout for dashboard */
+/* ==============================
+   Dashboard Bets Core — Styles
+   ============================== */
 
-/* General page layout */
+/* 🧱 General Layout */
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  background-color: #111;
+  color: #f5f5f5;
   margin: 40px;
-  background-color: #fafafa;
-  color: #111;
+  line-height: 1.6;
 }
 
-/* Headings */
+/* 🧭 Headings */
 h1 {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
+  font-weight: 700;
   margin-bottom: 10px;
+  color: #00ffb0;
 }
 
 h2 {
-  font-size: 1.8rem;
-  margin-top: 20px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 30px;
   margin-bottom: 10px;
+  color: #ccc;
 }
 
-/*table layout */
-table {
-  border-collapse: collapse; /* ensure borders join neatly */
-  width: 100%;
-  max-width: 800px;
-  background-color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 10px 14px;
-  text-align: left;
-}
-
-th:nth-child(even) {
-  background-color: #fafafa;
-}
-
-#loading {
-  font-style: italic;
-  color: #666;
-}
-
-button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease-in-out;
-}
-
-.edit-btn {
-  background-color: #4caf50;
-  color: white;
-  font-weight: 500;
-}
-
-.edit-btn:hover {
-  background-color: #43a047;
-  transform: translateY(-1px);
-}
-
-.delete-btn {
-  background-color: #f44336;
-  color: white;
-  font-weight: 500;
-  margin-left: 6px;
-}
-
-.delete-btn:hover {
-  background-color: #e53935;
-  transform: translateY(-1px);
-}
-
-td button {
-  margin-right: 4px;
-  display: inline-block;
-}
-
-form {
-  margin-top: 20px;
-}
-
-label {
-  margin-right: 10px;
-  font-weight: 500;
-}
-
-input {
-  padding: 5px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-input:focus {
-  border-color: #4caf50;
-  outline: none;
-}
-
-#form-message {
-  margin-top: 10px;
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.success {
-  color: #28a745;
-}
-
-.error {
-  color: #e53935;
-}
-
-button:hover {
-  opacity: 0.85;
-}
-
-/* stats panel */
+/* 🧩 Stats Panel */
 #stats-panel {
-  background-color: #f5f5f5;
-  border-radius: 10px;
+  background-color: #1a1a1a;
   padding: 20px;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 255, 176, 0.2);
+  margin-bottom: 30px;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.stats-grid div {
+  background-color: #222;
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* 🧮 Table Layout */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 900px;
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 8px rgba(0, 255, 176, 0.08);
+}
+
+th,
+td {
+  border: 1px solid #333;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+th {
+  background-color: #00ffb0;
+  color: #111;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+/* 💬 Loading Text */
+#loading {
+  font-style: italic;
+  color: #777;
+  margin-top: 10px;
+}
+
+/* 🧰 Buttons */
+button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  transform: scale(1.03);
+}
+
+.add-btn {
+  background-color: #00ffb0;
+  color: #111;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: #fff;
+}
+
+.delete-btn:hover {
+  background-color: #e0322a;
+}
+
+/* 🧾 Form Section */
+#new-pick-section {
+  background-color: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 30px;
+  max-width: 600px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+#new-pick-form {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  font-size: 1rem;
 }
 
-#stats-panel div strong {
-  color: #333;
+label {
+  font-weight: 500;
+  color: #ccc;
 }
 
-#total-profitloss {
-  font-weight: bold;
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background-color: #111;
+  color: #fff;
 }
 
-#total-profitloss:before {
-  content: "";
+/* 📱 Responsive */
+@media (max-width: 700px) {
+  body {
+    margin: 20px;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.add-btn {
+  background-color: #00ffb0;
+  color: #111;
+  font-weight: 600;
+}
+.add-btn:hover {
+  background-color: #00e6a0;
 }

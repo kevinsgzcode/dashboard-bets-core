@@ -50,7 +50,6 @@ function createRow(pick) {
   }</td>
     <td>${pick.result}</td>
     <td>
-      <button class="edit-btn" data-id="${pick.id}">Edit</button>
       <button class="delete-btn" data-id="${pick.id}">Delete</button>
     </td>
   `;
@@ -167,21 +166,75 @@ async function deletePick(id) {
   }
 }
 
+//Add charts
+let performanceChart;
+
+async function loadChart() {
+  try {
+    const res = await fetch("/api/picks");
+    const picks = await res.json();
+
+    if (!picks.length) return;
+
+    const ctx = document.getElementById("performanceChart").getContext("2d");
+
+    //prepare data
+    const labels = picks.map((p) => p.team);
+    const profitData = picks.map((p) => p.profitLoss);
+
+    //Destroy previuos chart if exist
+    if (performanceChart) performanceChart.destroy();
+
+    performanceChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Profit / Loss",
+            data: profitData,
+            backgroundColor: profitData.map((val) =>
+              val >= 0 ? "rgba(0, 255, 176, 0.6)" : "rgba(244, 67, 54, 0.6)"
+            ),
+            borderColor: profitData.map((val) =>
+              val >= 0 ? "#00ffb0" : "#f44336"
+            ),
+            borderWidth: 1.2,
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(255,255,255,0.1)" },
+            ticks: { color: "#ccc" },
+          },
+          x: {
+            grid: { color: "rgba(255,255,255,0.05)" },
+            ticks: { color: "#ccc" },
+          },
+        },
+      },
+    });
+    //show chart section
+    document.getElementById("chart-section").style.display = "block";
+  } catch (err) {
+    console.error("Error loading chart:", err);
+  }
+}
+
 //DOMContentLoaded — Initialize once
 document.addEventListener("DOMContentLoaded", () => {
   const tbody = document.getElementById("picks-body");
 
-  //Fixed typo: "click" instead of "clik"
-  //Event delegation for Edit/Delete (attached ONCE)
+  //Event delegation for Delete (attached ONCE)
   tbody.addEventListener("click", async (e) => {
     const target = e.target;
     const id = target.dataset.id;
-
-    // Handle Edit
-    if (target.classList.contains("edit-btn")) {
-      const newResult = prompt("Enter new result (won/lost/pending):");
-      if (newResult) await updatePick(id, newResult.trim());
-    }
 
     // Handle Delete
     if (target.classList.contains("delete-btn")) {
@@ -198,4 +251,5 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load initial data
   loadPicks();
   loadStats();
+  loadChart();
 });

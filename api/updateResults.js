@@ -29,12 +29,12 @@ export async function handleUpdateResults(req, res) {
   }
 
   try {
-    const db = await getDb();
+    const db = getDb();
 
     //Fetch all picks still pending
-    const pendingPicks = await db.all(
+    const pendingPicks = db.prepare(
       "SELECT id, team, stake, odds FROM picks WHERE result = 'pending'"
-    );
+    ).all();
 
     if (pendingPicks.length === 0) {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -102,8 +102,9 @@ export async function handleUpdateResults(req, res) {
         const possibleWin = stake * odds;
         const profitLoss = result === "won" ? possibleWin - stake : -stake;
 
-        await db.run(
-          `UPDATE picks SET result = ?, possibleWin = ?, profitLoss = ? WHERE id = ?`,
+        db.prepare(
+          `UPDATE picks SET result = ?, possibleWin = ?, profitLoss = ? WHERE id = ?`
+        ).run(
           result,
           possibleWin,
           profitLoss,

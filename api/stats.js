@@ -9,7 +9,7 @@ function sendJSON(res, code, payload) {
 //handle request to api/stats
 export async function handleStats(req, res) {
   try {
-    const db = await getDb();
+    const db = getDb();
 
     //Only allow GET method
     if (req.method !== "GET") {
@@ -19,7 +19,7 @@ export async function handleStats(req, res) {
 
     //Query aggregated data
     //COALENSCE return first value not NULL
-    const result = await db.get(`
+    const result = db.prepare(`
             SELECT 
             COALESCE(SUM(stake), 0) AS totalStake,
             COALESCE(SUM(profitLoss), 0) AS totalProfitLoss,
@@ -28,7 +28,7 @@ export async function handleStats(req, res) {
                 ELSE 0 
             END AS ROI 
             FROM picks;
-            `);
+            `).get();
 
     //Define initial bank
     const initialBank = 100;

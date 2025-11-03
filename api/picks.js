@@ -8,13 +8,13 @@ function sendJSON(res, code, payload) {
 
 export async function handlePicks(req, res) {
   try {
-    const db = await getDb();
+    const db = getDb();
 
     //Get all picks
     if (req.method === "GET") {
-      const rows = await db.all(
+      const rows = db.prepare(
         "SELECT id, team, bet, odds, stake, possibleWin, profitLoss, result FROM picks ORDER BY id DESC"
-      );
+      ).all();
       return sendJSON(res, 200, rows);
     }
 
@@ -62,20 +62,19 @@ export async function handlePicks(req, res) {
           const sql = `
           INSERT INTO picks (team, bet, odds, stake, possibleWin, profitLoss, result) 
           VALUES (?, ?, ?, ?, ?, ?, ?)`;
-          const { lastID } = await db.run(sql, [
+          const info = db.prepare(sql).run(
             team,
             bet,
             numOdds,
             stake,
             possibleWin,
             profitLoss,
-            result,
-          ]);
-
-          const created = await db.get(
-            "SELECT * FROM picks WHERE id = ?",
-            lastID
+            result
           );
+
+          const created = db.prepare(
+            "SELECT * FROM picks WHERE id = ?"
+          ).get(info.lastInsertRowid);
 
           return sendJSON(res, 201, { message: "Pick created", pick: created });
         } catch (e) {
@@ -96,7 +95,7 @@ export async function handlePicks(req, res) {
           const data = JSON.parse(body || "{}");
           const { result, odds, stake } = data;
 
-          const pick = await db.get("SELECT * FROM picks WHERE id = ?", id);
+          const pick = db.prepare("SELECT * FROM picks WHERE id = ?").get(id);
           if (!pick) return sendJSON(res, 404, { error: "Pick not found" });
 
           //updated fields
@@ -111,16 +110,16 @@ export async function handlePicks(req, res) {
 
           //update record
           const sql = `UPDATE picks SET result = ?, odds = ?, stake = ?, possibleWin = ?, profitLoss = ? WHERE id = ?`;
-          await db.run(sql, [
+          db.prepare(sql).run(
             result ?? pick.result,
             newOdds,
             newStake,
             possibleWin,
             profitLoss,
-            id,
-          ]);
+            id
+          );
 
-          const updated = await db.get("SELECT * FROM picks WHERE id = ?", id);
+          const updated = db.prepare("SELECT * FROM picks WHERE id = ?").get(id);
           return sendJSON(res, 200, {
             message: "Picks updated",
             pick: updated,
@@ -138,10 +137,10 @@ export async function handlePicks(req, res) {
     if (req.method === "DELETE") {
       const id = req.url.split("/").pop();
       try {
-        const db = await getDb();
-        const { changes } = await db.run("DELETE FROM picks WHERE id = ?", id);
+        const db = getDb();
+        const info = db.prepare("DELETE FROM picks WHERE id = ?").run(id);
 
-        if (changes === 0) {
+        if (info.changes === 0) {
           return sendJSON(res, 400, { error: "Pick not found" });
         }
         return sendJSON(res, 200, {

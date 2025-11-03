@@ -1,10 +1,10 @@
 //Ensure 'picks' exist
 import { getDb } from "./connect.js";
 
-export async function setupDataBase() {
-  const db = await getDb();
+export function setupDataBase() {
+  const db = getDb(); //No async needed - better-sqlite3 is synchronous
   //Execute SQL command
-  await db.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS picks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     team TEXT NOT NULL,

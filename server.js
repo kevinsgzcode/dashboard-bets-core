@@ -95,7 +95,7 @@ async function autoUpdatePicks() {
 
 //Auto-setup before starting the server
 (async () => {
-  await setupDataBase(); //ensure DB & table exist
+  setupDataBase(); //ensure DB & table exist
   await autoUpdatePicks(); //run auto-update after DB is ready
 
   server.listen(PORT, () => {
