@@ -39,7 +39,17 @@ function createRow(pick) {
   const profitColor =
     pick.profitLoss > 0 ? "green" : pick.profitLoss < 0 ? "red" : "gray";
 
+  //Format match date
+  const formattedDate = pick.match_date
+    ? new Date(pick.match_date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "-";
+
   row.innerHTML = `
+    <td>${pick.league || "-"}</td>
     <td>${pick.team}</td>
     <td>${pick.bet}</td>
     <td>${pick.odds.toFixed(2)}</td>
@@ -48,6 +58,7 @@ function createRow(pick) {
     <td style="color:${profitColor}; font-weight:500;">${
     pick.profitLoss?.toFixed(2) ?? 0
   }</td>
+    <td>${formattedDate}</td>
     <td>${pick.result}</td>
     <td>
       <button class="delete-btn" data-id="${pick.id}">Delete</button>

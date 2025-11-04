@@ -14,7 +14,7 @@ export async function handlePicks(req, res) {
     if (req.method === "GET") {
       const rows = db
         .prepare(
-          "SELECT id, team, bet, odds, stake, possibleWin, profitLoss, result FROM picks ORDER BY id DESC"
+          "SELECT id, team, bet, odds, stake, possibleWin, profitLoss, result, league, match_date FROM picks ORDER BY id DESC"
         )
         .all();
       return sendJSON(res, 200, rows);
