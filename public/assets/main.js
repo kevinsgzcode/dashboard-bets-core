@@ -91,6 +91,8 @@ function renderPicks(picks) {
       '<td colspan="10" style="text-align:center; color:gray;">No picks found</td>';
     tbody.appendChild(emptyRow);
   }
+  const total = document.getElementById("picks-count");
+  if (total) total.textContent = `Showing ${picks.length} picks`;
 }
 
 //Load all picks and render in the table
@@ -274,8 +276,37 @@ function setupFilters() {
   toDate.addEventListener("change", applyFilters);
 }
 
+//filters
 function applyFilters() {
-  console.log("Filters applied - logic coming next");
+  const teamInput = document.getElementById("filterTeam").value.toLowerCase();
+  const resultSelect = document.getElementById("filterResult").value;
+  const fromDate = document.getElementById("filterFrom").value;
+  const toDate = document.getElementById("filterTo").value;
+
+  //Created a new filtered copy of the original state
+  filteredPicks = allPicks.filter((pick) => {
+    // team filter
+    const matchesTeam = teamInput
+      ? pick.team.toLowerCase().includes(teamInput)
+      : true;
+
+    // result filter
+    const matchesResult = resultSelect ? pick.result === resultSelect : true;
+
+    // date filter
+    const pickDate = pick.match_date ? new Date(pick.match_date) : null;
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+
+    const matchesDate =
+      (!from || (pickDate && pickDate >= from)) &&
+      (!to || (pickDate && pickDate <= to));
+
+    return matchesTeam && matchesResult && matchesDate;
+  });
+
+  //show filters in table
+  renderPicks(filteredPicks);
 }
 
 //DOMContentLoaded — Initialize once
