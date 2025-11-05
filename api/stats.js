@@ -1,3 +1,10 @@
+// This module performs all betting statistics calculations on the backend side.
+// Doing these aggregations server-side ensures:
+// 1. Data integrity — results are based on verified database values, not client input.
+// 2. Performance — SQLite handles SUM, AVG, and other aggregates far faster than JS loops.
+// 3. Scalability — if the data source or structure changes, the frontend logic remains intact.
+// In short: calculations belong to the data layer, not the presentation layer.
+
 // Global stats for bank trackert
 import { getDb } from "../db/connect.js";
 
@@ -19,7 +26,9 @@ export async function handleStats(req, res) {
 
     //Query aggregated data
     //COALENSCE return first value not NULL
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
             SELECT 
             COALESCE(SUM(stake), 0) AS totalStake,
             COALESCE(SUM(profitLoss), 0) AS totalProfitLoss,
@@ -28,7 +37,9 @@ export async function handleStats(req, res) {
                 ELSE 0 
             END AS ROI 
             FROM picks;
-            `).get();
+            `
+      )
+      .get();
 
     //Define initial bank
     const initialBank = 100;

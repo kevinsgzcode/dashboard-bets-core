@@ -2,7 +2,7 @@
    Dashboard Bets Core — Styles
    ============================== */
 
-/* 🧱 General Layout */
+/* General Layout */
 body {
   font-family: "Inter", Arial, Helvetica, sans-serif;
   background-color: #111;
@@ -11,7 +11,7 @@ body {
   line-height: 1.6;
 }
 
-/* 🧭 Headings */
+/* Headings */
 h1 {
   font-size: 2.4rem;
   font-weight: 700;
@@ -27,7 +27,7 @@ h2 {
   color: #ccc;
 }
 
-/* 🧩 Stats Panel */
+/*  Stats Panel */
 #stats-panel {
   background-color: #1a1a1a;
   padding: 20px;
@@ -49,7 +49,7 @@ h2 {
   text-align: center;
 }
 
-/* 🧮 Table Layout */
+/* Table Layout */
 table {
   border-collapse: collapse;
   width: 100%;
@@ -77,14 +77,14 @@ tr:nth-child(even) {
   background-color: #1a1a1a;
 }
 
-/* 💬 Loading Text */
+/*  Loading Text */
 #loading {
   font-style: italic;
   color: #777;
   margin-top: 10px;
 }
 
-/* 🧰 Buttons */
+/*  Buttons */
 button {
   padding: 8px 12px;
   border: none;
@@ -112,7 +112,7 @@ button:hover {
   background-color: #e0322a;
 }
 
-/* 🧾 Form Section */
+/*  Form Section */
 #new-pick-section {
   background-color: #1a1a1a;
   padding: 20px;
@@ -141,7 +141,7 @@ input {
   color: #fff;
 }
 
-/* 📱 Responsive */
+/*  Responsive */
 @media (max-width: 700px) {
   body {
     margin: 20px;
@@ -163,4 +163,58 @@ input {
 }
 .add-btn:hover {
   background-color: #00e6a0;
+}
+
+/* 🔍 Filters Section */
+#filters-section {
+  background-color: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 25px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0, 255, 176, 0.1);
+  max-width: 900px;
+}
+
+#filters-section h2 {
+  color: #00ffb0;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.filters-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 160px;
+  min-width: 150px;
+}
+
+.filter-item label {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 5px;
+}
+
+.filter-item input,
+.filter-item select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background-color: #111;
+  color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+  border-color: #00ffb0;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 255, 176, 0.4);
 }

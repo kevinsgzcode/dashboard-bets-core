@@ -34,6 +34,42 @@
         <h2>Performance Chart</h2>
         <canvas id="performanceChart" width="400" height="200"></canvas>
       </section>
+      <!-- Filters -->
+      <!-- Filters -->
+      <section id="filters-section" style="display: none">
+        <h2>🔍 Filters</h2>
+
+        <div class="filters-grid">
+          <div class="filter-item">
+            <label for="filterTeam">Team:</label>
+            <input
+              type="text"
+              id="filterTeam"
+              placeholder="Search by team..."
+            />
+          </div>
+
+          <div class="filter-item">
+            <label for="filterResult">Result:</label>
+            <select id="filterResult">
+              <option value="">All</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+              <option value="pending">Pending</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <label for="filterFrom">From:</label>
+            <input type="date" id="filterFrom" />
+          </div>
+
+          <div class="filter-item">
+            <label for="filterTo">To:</label>
+            <input type="date" id="filterTo" />
+          </div>
+        </div>
+      </section>
 
       <!-- Table -->
       <h2>Stored picks</h2>

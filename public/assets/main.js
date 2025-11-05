@@ -1,6 +1,10 @@
 // Frontend logic for Dashboard Bets Core
 // Handles full CRUD operations via Fetch API
 
+//Local state for filtering
+let allPicks = []; //data from backend
+let filteredPicks = [];
+
 //Fetch and display global stats
 async function loadStats() {
   try {
@@ -67,28 +71,43 @@ function createRow(pick) {
   return row;
 }
 
+//Render given picks array into te table
+function renderPicks(picks) {
+  const tbody = document.getElementById("picks-body");
+  const loading = document.getElementById("loading");
+  const table = document.getElementById("picks-table");
+
+  tbody.replaceChildren(); //clean table
+  picks.forEach((pick) => tbody.appendChild(createRow(pick)));
+
+  //show table + filters
+  loading.style.display = "none";
+  table.style.display = "table";
+  document.getElementById("filters-section").style.display = "block";
+
+  if (picks.length === 0) {
+    const emptyRow = document.createElement("tr");
+    emptyRow.innerHTML =
+      '<td colspan="10" style="text-align:center; color:gray;">No picks found</td>';
+    tbody.appendChild(emptyRow);
+  }
+}
+
 //Load all picks and render in the table
 async function loadPicks() {
   const loading = document.getElementById("loading");
-  const table = document.getElementById("picks-table");
-  const tbody = document.getElementById("picks-body");
 
   try {
     // Fetch data from backend API
     const response = await fetch("/api/picks");
     if (!response.ok) throw new Error("Failed to load picks");
 
-    const picks = await response.json();
+    const data = await response.json();
 
-    // Clear and repopulate rows safely
-    tbody.replaceChildren(); //keeps the same <tbody> reference (listeners stay alive)
+    allPicks = data; //keep full dataset in memory
+    filteredPicks = [...allPicks]; //initial state
 
-    // Render all picks dynamically
-    picks.forEach((pick) => tbody.appendChild(createRow(pick)));
-
-    // Show table and hide loading text
-    loading.style.display = "none";
-    table.style.display = "table";
+    renderPicks(filteredPicks);
   } catch (error) {
     loading.textContent = "Error loading picks";
     console.error(error);
@@ -240,6 +259,25 @@ async function loadChart() {
   }
 }
 
+//Filters logic
+function setupFilters() {
+  const teamInput = document.getElementById("filterTeam");
+  const resultSelect = document.getElementById("filterResult");
+  const fromDate = document.getElementById("filterFrom");
+  const toDate = document.getElementById("filterTo");
+
+  if (!teamInput) return; //safety check
+
+  teamInput.addEventListener("input", applyFilters);
+  resultSelect.addEventListener("change", applyFilters);
+  fromDate.addEventListener("change", applyFilters);
+  toDate.addEventListener("change", applyFilters);
+}
+
+function applyFilters() {
+  console.log("Filters applied - logic coming next");
+}
+
 //DOMContentLoaded — Initialize once
 document.addEventListener("DOMContentLoaded", () => {
   const tbody = document.getElementById("picks-body");
@@ -344,4 +382,5 @@ document.addEventListener("DOMContentLoaded", () => {
   loadPicks();
   loadStats();
   loadChart();
+  setupFilters();
 });
