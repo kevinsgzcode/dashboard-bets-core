@@ -10,6 +10,30 @@
     <h1>Dashboard Bets</h1>
     <section id="picks-seccion">
       <div id="loading">Loading picks</div>
+      <!-- Users -->
+      <section id="user-section">
+        <h2>Active User</h2>
+        <div id="user-panel">
+          <select id="user-select"></select>
+          <button id="refresh-users">Refresh</button>
+        </div>
+        <form id="new-user-form">
+          <input
+            type="text"
+            id="new-username"
+            placeholder="New Username"
+            required
+          />
+          <input
+            type="number"
+            id="new-bank"
+            placeholder="Put your initial bank"
+            required
+          />
+          <button type="submit">Add User</button>
+        </form>
+        <p id="user-message" style="color: gray; margin-top: 5px"></p>
+      </section>
       <!-- Bank tracker -->
       <section id="stats-panel" style="display: none">
         <h2>Bank Overview</h2>

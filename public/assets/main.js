@@ -5,6 +5,57 @@
 let allPicks = []; //data from backend
 let filteredPicks = [];
 
+//Load users
+async function loadUsers() {
+  try {
+    const res = await fetch("/api/users");
+    const users = await res.json();
+
+    const select = document.getElementById("user-select");
+    select.innerHTML = "";
+
+    users.forEach((users) => {
+      const option = document.createElement("option");
+      option.value = users.id;
+      option.textContent = `${users.username} ($${users.initialBank})`;
+      select.appendChild(option);
+    });
+
+    //Restore active user from local storage
+    const activeUserId = localStorage.getItem("activeUserId");
+    if (activeUserId) select.value = activeUserId;
+  } catch (err) {
+    console.error("Error loading users:", err);
+  }
+}
+
+//Create new user
+async function createUser(event) {
+  event.preventDefault();
+  const username = document.getElementById("new-username").value.trim();
+  const initialBank = parseFloat(document.getElementById("new-bank").value);
+  const msg = document.getElementById("user-message");
+
+  try {
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, initialBank }),
+    });
+
+    if (!res.ok) throw new Error("Failed to create user");
+
+    msg.textContent = "✅ User created successfully";
+    msg.style.color = "green";
+
+    document.getElementById("new-user-form").reset();
+    await loadUsers();
+  } catch (err) {
+    msg.textContent = "❌Error creating user";
+    msg.style.color = "red";
+  }
+}
+
 //Fetch and display global stats
 async function loadStats() {
   try {
@@ -404,12 +455,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  //handle Users
+  document.getElementById("refresh-users").addEventListener("click", loadUsers);
+  document
+    .getElementById("new-user-form")
+    .addEventListener("submit", createUser);
+
+  document.getElementById("user-select").addEventListener("change", (e) => {
+    const activeUserId = e.target.value;
+    localStorage.setItem("activeUserId", activeUserId);
+    console.log(`Active user: ${activeUserId}`);
+    loadPicks();
+    loadStats();
+    loadChart();
+  });
+
   // Handle form submission for new picks
   document
     .getElementById("new-pick-form")
     .addEventListener("submit", createPick);
 
   // Load initial data
+  loadUsers();
   loadPicks();
   loadStats();
   loadChart();

@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import { handleScores } from "./api/scores.js";
 import { setupDataBase } from "./db/setup.js";
 import { handleUpdateResults } from "./api/updateResults.js";
+import { handleUsers } from "./api/users.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +22,11 @@ const server = http.createServer(async (req, res) => {
   //Handle API routes
   if (req.url.startsWith("/api/picks")) {
     return handlePicks(req, res);
+  }
+
+  //handle users
+  if (req.url.startsWith("/api/users")) {
+    return handleUsers(req, res);
   }
 
   //handle scores
