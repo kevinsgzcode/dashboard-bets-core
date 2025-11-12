@@ -80,3 +80,10 @@ To fix this:
    - Confirmed correct results via Postman for both picks and stats.
 
 ---
+
+## User data flow integration
+
+- Connected frontend to backend using user_id filters for /picks and /stats.
+- Implemented persistent user session with localStorage (activeUserId).
+- Updated createPick, loadPicks, loadStats, loadChart, and deletePick to dynamically fetch and render user-specific data.
+- Improved UX: All UI updates occur instantly without reloads.
