@@ -24,6 +24,11 @@ const server = http.createServer(async (req, res) => {
     return handlePicks(req, res);
   }
 
+  //handle register and login
+  if (req.url.startsWith("/api/register") || req.url.startsWith("/api/login")) {
+    return handleUsers(req, res);
+  }
+
   //handle users
   if (req.url.startsWith("/api/users")) {
     return handleUsers(req, res);

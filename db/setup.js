@@ -55,6 +55,17 @@ export function setupDataBase() {
     );
     console.log("New column 'user_id' added to 'picks'");
   }
+  //Sessions table
+  db.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  token TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+  `);
+  console.log("✅ Table 'sessions' created or verified");
 }
 
 setupDataBase();

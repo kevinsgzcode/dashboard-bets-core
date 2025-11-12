@@ -2,4 +2,5 @@ ignoredBuiltDependencies:
   - sqlite3
 
 onlyBuiltDependencies:
+  - bcrypt
   - better-sqlite3
