@@ -56,10 +56,20 @@ async function createUser(event) {
   }
 }
 
-//Fetch and display global stats
+//Fetch and display stats for the active user
 async function loadStats() {
   try {
-    const res = await fetch("/api/stats");
+    //get user
+    const userId = localStorage.getItem("activeUserId");
+
+    if (!userId) {
+      console.warn("No active user selected, cannot load stats");
+      document.getElementById("stats-panel").style.display = "none";
+      return;
+    }
+
+    //Fetch stats filtered by user
+    const res = await fetch(`/api/stats?user_id=${userId}`);
     if (!res.ok) throw new Error("Failed to load stats");
 
     const data = await res.json();
@@ -81,6 +91,8 @@ async function loadStats() {
 
     //show the panel
     document.getElementById("stats-panel").style.display = "block";
+
+    console.log(`Stats updated for user ${userId}`);
   } catch (err) {
     console.error("Error loading stats:", err);
   }
@@ -151,32 +163,53 @@ async function loadPicks() {
   const loading = document.getElementById("loading");
 
   try {
-    // Fetch data from backend API
-    const response = await fetch("/api/picks");
-    if (!response.ok) throw new Error("Failed to load picks");
+    // Get active user from localStorage
+    const userId = localStorage.getItem("activeUserId");
 
+    if (!userId) {
+      loading.textContent = "Select a user to view their picks";
+      console.warn("No active user - cannot load picks");
+      return;
+    }
+
+    //load picks of the user
+    const response = await fetch(`/api/picks?user_id=${userId}`);
+    if (!renderPicks.ok) throw new Error("Failed to load picks");
+
+    //Parse data and update state
     const data = await response.json();
+    allPicks = data; //Keep dataset in memory
+    filteredPicks = [...allPicks];
 
-    allPicks = data; //keep full dataset in memory
-    filteredPicks = [...allPicks]; //initial state
-
+    //render picks
     renderPicks(filteredPicks);
+    console.log(`✅Loaded ${filteredPicks.length} picks for user ${userId}`);
   } catch (error) {
     loading.textContent = "Error loading picks";
-    console.error(error);
+    console.error("Error loading picks:", error);
   }
 }
 
-//Handle form submission (Create new pick with stake)
+//Handle create new pick with stake)
 
 async function createPick(event) {
   event.preventDefault();
+
+  //get the user
+  const user_id = localStorage.getItem("activeUserId");
+  const message = document.getElementById("form-message");
+
+  //prevent submission if no user
+  if (!user_id) {
+    message.textContent = "Please select a user before adding pick";
+    message.style.color = "red";
+    return;
+  }
 
   const team = document.getElementById("team").value.trim();
   const bet = document.getElementById("bet").value.trim();
   const odds = parseFloat(document.getElementById("odds").value);
   const stake = parseFloat(document.getElementById("stake").value);
-  const message = document.getElementById("form-message");
   const league = document.getElementById("league").value;
   const match_date = document.getElementById("match_date").value;
 
@@ -191,21 +224,31 @@ async function createPick(event) {
     const response = await fetch("/api/picks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ team, bet, odds, stake, league, match_date }),
+      body: JSON.stringify({
+        team,
+        bet,
+        odds,
+        stake,
+        league,
+        match_date,
+        user_id,
+      }),
     });
 
     if (!response.ok) throw new Error("Failed to create pick");
 
+    //Append new row dynamically
     const result = await response.json();
-
-    //Append new row directly instead of reloading entire table
     const tbody = document.getElementById("picks-body");
     tbody.prepend(createRow(result.pick)); //adds pick instantly
 
     message.textContent = "✅ Pick added successfully!";
     message.style.color = "green";
     document.getElementById("new-pick-form").reset();
+
+    //refresh stats after adding new pick
     await loadStats();
+    console.log(`✅Pick created for user ${user_id}`);
   } catch (err) {
     console.error(err);
     message.textContent = "Error adding pick";
