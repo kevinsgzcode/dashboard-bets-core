@@ -50,7 +50,9 @@ export function setupDataBase() {
 
   //Picks - Users
   if (!columns.includes("user_id")) {
-    db.exec(`ALTER TABLE picks ADD COLUMN user_id INTEGER REFERENCES user(id)`);
+    db.exec(
+      `ALTER TABLE picks ADD COLUMN user_id INTEGER REFERENCES users(id)`
+    );
     console.log("New column 'user_id' added to 'picks'");
   }
 }

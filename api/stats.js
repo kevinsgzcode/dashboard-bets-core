@@ -24,7 +24,15 @@ export async function handleStats(req, res) {
       return res.end("Method not allowed");
     }
 
-    //Query aggregated data
+    //extract user_id
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const user_id = url.searchParams.get("user_id");
+
+    if (!user_id) {
+      return sendJSON(res, 400, { error: "Missing user_id" });
+    }
+
+    //Query aggregated data for that specific user
     //COALENSCE return first value not NULL
     const result = db
       .prepare(
@@ -36,15 +44,24 @@ export async function handleStats(req, res) {
                 WHEN SUM(stake) > 0 THEN (SUM(profitLoss) * 100.0 / SUM(stake))
                 ELSE 0 
             END AS ROI 
-            FROM picks;
+            FROM picks
+            WHERE user_id = ?;
             `
       )
-      .get();
+      .get(user_id);
 
-    //Define initial bank
-    const initialBank = 100;
+    //fetch initial bank from users table
+    const user = db
+      .prepare("SELECT initialBank FROM users WHERE id = ?")
+      .get(user_id);
+
+    //default to 100 if not found
+    const initialBank = user?.initialBank ?? 100;
+
+    //calculate te users current bank dynamically
     const currentBank = initialBank + result.totalProfitLoss;
 
+    //send data to frontend
     return sendJSON(res, 200, {
       initialBank,
       currentBank,

@@ -10,17 +10,25 @@ export async function handlePicks(req, res) {
   try {
     const db = getDb();
 
-    //Get all picks
+    //Get all picks for active user
     if (req.method === "GET") {
-      const rows = db
-        .prepare(
-          "SELECT id, team, bet, odds, stake, possibleWin, profitLoss, result, league, match_date FROM picks ORDER BY id DESC"
-        )
-        .all();
-      return sendJSON(res, 200, rows);
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const userId = url.searchParams.get("user_id");
+
+      if (!userId) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: "Missing user_id" }));
+      }
+
+      const picks = db
+        .prepare("SELECT * FROM picks WHERE user_id = ? ORDER BY id DESC")
+        .all(userId);
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(picks));
     }
 
-    //POST - Create New pick
+    //POST - Create New pick for specific user
     if (req.method === "POST") {
       let body = "";
       req.on("data", (chunk) => (body += chunk));
@@ -37,7 +45,13 @@ export async function handlePicks(req, res) {
             result = "pending",
             league = "NFL",
             match_date,
+            user_id,
           } = parsed;
+
+          //validate exist user_id
+          if (!user_id) {
+            return sendJSON(res, 400, { error: "Missing user_id field" });
+          }
 
           // Normalize values
           if (typeof team !== "string") team = String(team ?? "").trim();
@@ -81,8 +95,8 @@ export async function handlePicks(req, res) {
 
           // Insert pick with new fields
           const sql = `
-          INSERT INTO picks (team, bet, odds, stake, possibleWin, profitLoss, result, league, match_date) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          INSERT INTO picks (team, bet, odds, stake, possibleWin, profitLoss, result, league, match_date, user_id) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
           const info = db
             .prepare(sql)
             .run(
@@ -94,7 +108,8 @@ export async function handlePicks(req, res) {
               profitLoss,
               result,
               league,
-              match_date
+              match_date,
+              user_id
             );
 
           const created = db
