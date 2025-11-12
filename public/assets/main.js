@@ -92,7 +92,7 @@ async function loadStats() {
     //show the panel
     document.getElementById("stats-panel").style.display = "block";
 
-    console.log(`Stats updated for user ${userId}`);
+    console.log(`✅Stats updated for user ${userId}`);
   } catch (err) {
     console.error("Error loading stats:", err);
   }
@@ -174,7 +174,7 @@ async function loadPicks() {
 
     //load picks of the user
     const response = await fetch(`/api/picks?user_id=${userId}`);
-    if (!renderPicks.ok) throw new Error("Failed to load picks");
+    if (!response.ok) throw new Error("Failed to load picks");
 
     //Parse data and update state
     const data = await response.json();
@@ -183,7 +183,14 @@ async function loadPicks() {
 
     //render picks
     renderPicks(filteredPicks);
-    console.log(`✅Loaded ${filteredPicks.length} picks for user ${userId}`);
+
+    //confirmation
+    if (filteredPicks.length === 0) {
+      loading.textContent = "No picks found for user";
+    } else {
+      loading.style.display = "none";
+      console.log(`✅Loaded ${filteredPicks.length} picks for user ${userId}`);
+    }
   } catch (error) {
     loading.textContent = "Error loading picks";
     console.error("Error loading picks:", error);
@@ -191,15 +198,14 @@ async function loadPicks() {
 }
 
 //Handle create new pick with stake)
-
 async function createPick(event) {
   event.preventDefault();
 
   //get the user
-  const user_id = localStorage.getItem("activeUserId");
   const message = document.getElementById("form-message");
+  const user_id = localStorage.getItem("activeUserId");
 
-  //prevent submission if no user
+  //Validation user session
   if (!user_id) {
     message.textContent = "Please select a user before adding pick";
     message.style.color = "red";
@@ -221,6 +227,7 @@ async function createPick(event) {
   }
 
   try {
+    //send pick to backend
     const response = await fetch("/api/picks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -237,10 +244,10 @@ async function createPick(event) {
 
     if (!response.ok) throw new Error("Failed to create pick");
 
-    //Append new row dynamically
+    //Update UI
     const result = await response.json();
     const tbody = document.getElementById("picks-body");
-    tbody.prepend(createRow(result.pick)); //adds pick instantly
+    tbody.prepend(createRow(result.pick));
 
     message.textContent = "✅ Pick added successfully!";
     message.style.color = "green";
@@ -248,6 +255,7 @@ async function createPick(event) {
 
     //refresh stats after adding new pick
     await loadStats();
+    await loadChart();
     console.log(`✅Pick created for user ${user_id}`);
   } catch (err) {
     console.error(err);
@@ -276,20 +284,34 @@ async function updatePick(id, result) {
   }
 }
 
-//DELETE - Remove pick
+//Remove pick
 async function deletePick(id) {
   try {
-    const response = await fetch(`/api/picks/${id}`, {
-      method: "DELETE",
-    });
+    const userId = localStorage.getItem("activeUserId");
 
+    //validation user
+    if (!userId) {
+      alert("Please select a user before deleting picks");
+      console.warn("No active user - cannot delete pick");
+      return;
+    }
+
+    //send DELETE request
+    const response = await fetch(`/api/picks/${id}`, { method: "DELETE" });
     if (!response.ok) throw new Error("Failed to delete pick");
 
-    console.log("Pick deleted:", await response.json());
-    await loadPicks(); //Reload table to reflect removal
-    await loadStats(); //Reload stats
+    const result = await response.json();
+    console.log("Pick deleted:", result);
+
+    //refresh user data
+    await loadPicks();
+    await loadStats();
+    await loadChart();
+
+    console.log(`✅UI update after deleting pick for user ${userId}`);
   } catch (err) {
     console.error(err);
+    console.log("Error deleting pick", err);
     alert("Error deleting pick");
   }
 }
@@ -299,20 +321,33 @@ let performanceChart;
 
 async function loadChart() {
   try {
-    const res = await fetch("/api/picks");
+    const userId = localStorage.getItem("activeUserId");
+    if (!userId) {
+      console.warn("No active user - cannot load chart");
+      document.getElementById("chart-section").style.display = "none";
+      return;
+    }
+
+    //fetch user chart
+    const res = await fetch(`/api/picks?user_id=${userId}`);
+    if (!res.ok) throw new Error("Failed load chart");
+
     const picks = await res.json();
-
-    if (!picks.length) return;
-
-    const ctx = document.getElementById("performanceChart").getContext("2d");
+    if (!Array.isArray(picks) || picks.length === 0) {
+      console.log(`No picks found for user ${userId}, hiding chart`);
+      document.getElementById("chart-section").style.display = "none";
+      return;
+    }
 
     //prepare data
+    const ctx = document.getElementById("performanceChart").getContext("2d");
     const labels = picks.map((p) => p.team);
     const profitData = picks.map((p) => p.profitLoss);
 
     //Destroy previuos chart if exist
     if (performanceChart) performanceChart.destroy();
 
+    //build new chart
     performanceChart = new Chart(ctx, {
       type: "bar",
       data: {
@@ -350,8 +385,10 @@ async function loadChart() {
     });
     //show chart section
     document.getElementById("chart-section").style.display = "block";
+    console.log(`✅Chart updated for user ${userId}`);
   } catch (err) {
     console.error("Error loading chart:", err);
+    document.getElementById("chart-section").style.display = "none";
   }
 }
 
