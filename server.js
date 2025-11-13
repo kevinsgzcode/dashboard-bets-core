@@ -34,6 +34,11 @@ const server = http.createServer(async (req, res) => {
     return handleUsers(req, res);
   }
 
+  //Handle logout
+  if (req.url.startsWith("/api/logout")) {
+    return handleUsers(req, res);
+  }
+
   //handle scores
   if (req.url.startsWith("/api/scores")) {
     return handleScores(req, res);

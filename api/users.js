@@ -2,6 +2,8 @@
 import { getDb } from "../db/connect.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { verifySession } from "./middleware/auth.js";
+import { error } from "console";
 
 export async function handleUsers(req, res) {
   const db = getDb();
@@ -91,6 +93,46 @@ export async function handleUsers(req, res) {
         res.end(JSON.stringify({ error: "Internal server error" }));
       }
     });
+    return;
+  }
+  //Logout
+  if (req.url === "/api/logout" && req.method === "POST") {
+    try {
+      //Validate token
+      const user_id = verifySession(req);
+      if (!user_id) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: "Unauthorized" }));
+      }
+      //Extract token from header
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.split(" ")[1];
+      if (!token) {
+        res.writeHead(400, { "Content-Type": "acpplication/json" });
+        return res.end(JSON.stringify({ error: "Missing token" }));
+      }
+      //Delete session
+      const db = getDb();
+      const result = db
+        .prepare("DELETE FROM sessions WHERE token = ?")
+        .run(token);
+
+      if (result.changes === 0) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ error: "Session not found" }));
+      }
+
+      //Success
+      console.log(`👋🏼 User ${user_id} logged out successfully`);
+      res.writeHead(200, { "Contente-Type": "application/json" });
+      return res.end(
+        JSON.stringify({ success: true, message: "Logged out successfully" })
+      );
+    } catch (err) {
+      console.log("❌ Logout error", err);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Internal server error" }));
+    }
     return;
   }
 
