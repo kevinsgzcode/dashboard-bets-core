@@ -7,6 +7,7 @@
 
 // Global stats for bank trackert
 import { getDb } from "../db/connect.js";
+import { verifySession } from "./middleware/auth.js";
 
 function sendJSON(res, code, payload) {
   res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
@@ -15,6 +16,13 @@ function sendJSON(res, code, payload) {
 
 //handle request to api/stats
 export async function handleStats(req, res) {
+  //verify session
+  const user_id = verifySession(req);
+  if (!user_id) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ error: "Unauthorized" }));
+  }
+
   try {
     const db = getDb();
 

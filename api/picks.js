@@ -1,5 +1,6 @@
 //api/picks.js - SQL-backend
 import { getDb } from "../db/connect.js";
+import { verifySession } from "./middleware/auth.js";
 
 function sendJSON(res, code, payload) {
   res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
@@ -10,19 +11,18 @@ export async function handlePicks(req, res) {
   try {
     const db = getDb();
 
+    //Veryfi token
+    const user_id = verifySession(req);
+    if (!user_id) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Unauthorized" }));
+    }
+
     //Get all picks for active user
     if (req.method === "GET") {
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      const userId = url.searchParams.get("user_id");
-
-      if (!userId) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify({ error: "Missing user_id" }));
-      }
-
       const picks = db
         .prepare("SELECT * FROM picks WHERE user_id = ? ORDER BY id DESC")
-        .all(userId);
+        .all(user_id);
 
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end(JSON.stringify(picks));
@@ -34,9 +34,16 @@ export async function handlePicks(req, res) {
       req.on("data", (chunk) => (body += chunk));
       req.on("end", async () => {
         try {
+          //validate session
+          const user_id = verifySession(req);
+          if (!user_id) {
+            return sendJSON(res, 401, { error: "Unauthorized" });
+          }
+
           console.log("RAW BODY:", body);
           const parsed = JSON.parse(body || "{}");
           console.log("PARSED:", parsed);
+
           let {
             team,
             bet,
@@ -45,13 +52,7 @@ export async function handlePicks(req, res) {
             result = "pending",
             league = "NFL",
             match_date,
-            user_id,
           } = parsed;
-
-          //validate exist user_id
-          if (!user_id) {
-            return sendJSON(res, 400, { error: "Missing user_id field" });
-          }
 
           // Normalize values
           if (typeof team !== "string") team = String(team ?? "").trim();
@@ -60,7 +61,7 @@ export async function handlePicks(req, res) {
 
           stake = parseFloat(stake);
 
-          // takes "1.95" o "1,95" o 1.95
+          // Normalize odds
           let numOdds;
           if (typeof odds === "number") {
             numOdds = odds;
@@ -71,7 +72,7 @@ export async function handlePicks(req, res) {
             numOdds = Number(normalized);
           }
 
-          //Validate all required fields
+          //Validate required fields
 
           if (
             !team ||
@@ -116,6 +117,7 @@ export async function handlePicks(req, res) {
             .prepare("SELECT * FROM picks WHERE id = ?")
             .get(info.lastInsertRowid);
 
+          console.log(`✅ Pick created for user_id: ${user_id}`);
           return sendJSON(res, 201, { message: "Pick created", pick: created });
         } catch (e) {
           console.error("POST /api/picks error:", e);
