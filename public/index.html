@@ -7,33 +7,48 @@
     <link rel="stylesheet" href="./assets/styles.css" />
   </head>
   <body>
+    <!--Login seccion-->
+    <section id="auth-seccion">
+      <h2>Welcome to your bet dashboard</h2>
+      <!-- Login form -->
+      <div id="login-box">
+        <h3>Login</h3>
+        <form id="login-form">
+          <label for="login-username">Username:</label>
+          <input type="text" id="login-username" required />
+
+          <label for="login-password">Password:</label>
+          <input type="password" id="login-password" required />
+
+          <button type="submit" class="add-btn">Login</button>
+        </form>
+      </div>
+      <!--Register form -->
+      <div id="register-box">
+        <h3>Register</h3>
+        <form id="register-form">
+          <label for="reg-username">Username:</label>
+          <input type="text" id="reg-username" required />
+
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" required />
+
+          <label for="reg-bank">Initial Bank $:</label>
+          <input type="number" id="reg-bank" value="100" required />
+
+          <button type="submit" class="add-btn">Register</button>
+        </form>
+      </div>
+      <p id="auth-message" style="color: gray; margin-top: 10px"></p>
+    </section>
+    <!--Logout button-->
+    <section id="logout-section" style="display: none; margin-bottom: 20px">
+      <button id="logout-btn" class="delete-btn">Logout</button>
+    </section>
+    <!-- Dashboard -->
     <h1>Dashboard Bets</h1>
     <section id="picks-seccion">
       <div id="loading">Loading picks</div>
-      <!-- Users -->
-      <section id="user-section">
-        <h2>Active User</h2>
-        <div id="user-panel">
-          <select id="user-select"></select>
-          <button id="refresh-users">Refresh</button>
-        </div>
-        <form id="new-user-form">
-          <input
-            type="text"
-            id="new-username"
-            placeholder="New Username"
-            required
-          />
-          <input
-            type="number"
-            id="new-bank"
-            placeholder="Put your initial bank"
-            required
-          />
-          <button type="submit">Add User</button>
-        </form>
-        <p id="user-message" style="color: gray; margin-top: 5px"></p>
-      </section>
       <!-- Bank tracker -->
       <section id="stats-panel" style="display: none">
         <h2>Bank Overview</h2>

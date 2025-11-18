@@ -5,71 +5,156 @@
 let allPicks = []; //data from backend
 let filteredPicks = [];
 
-//Load users
-async function loadUsers() {
-  try {
-    const res = await fetch("/api/users");
-    const users = await res.json();
+//Handle login / register / logout
+//check session on page load
 
-    const select = document.getElementById("user-select");
-    select.innerHTML = "";
+async function checkSession() {
+  const token = localStorage.getItem("token");
+  if (token) {
+    console.log("✅Token found, user already logged in");
+    document.getElementById("auth-seccion").style.display = "none";
+    document.getElementById("logout-section").style.display = "block";
+    document.getElementById("picks-seccion").style.display = "block";
 
-    users.forEach((users) => {
-      const option = document.createElement("option");
-      option.value = users.id;
-      option.textContent = `${users.username} ($${users.initialBank})`;
-      select.appendChild(option);
-    });
-
-    //Restore active user from local storage
-    const activeUserId = localStorage.getItem("activeUserId");
-    if (activeUserId) select.value = activeUserId;
-  } catch (err) {
-    console.error("Error loading users:", err);
+    await loadPicks();
+    await loadStats();
+    await loadChart();
+  } else {
+    document.getElementById("auth-seccion").style.display = "block";
+    document.getElementById("logout-section").style.display = "none";
+    document.getElementById("picks-seccion").style.display = "none";
   }
 }
 
-//Create new user
-async function createUser(event) {
-  event.preventDefault();
-  const username = document.getElementById("new-username").value.trim();
-  const initialBank = parseFloat(document.getElementById("new-bank").value);
-  const msg = document.getElementById("user-message");
+//Register
+async function registerUser(e) {
+  e.preventDefault();
+  const username = document.getElementById("reg-username").value.trim();
+  const password = document.getElementById("reg-password").value.trim();
+  const initialBank = parseFloat(document.getElementById("reg-bank").value);
+  const msg = document.getElementById("auth-message");
 
   try {
-    const res = await fetch("/api/users", {
+    const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, initialBank }),
+      body: JSON.stringify({ username, password, initialBank }),
     });
-
-    if (!res.ok) throw new Error("Failed to create user");
-
-    msg.textContent = "✅ User created successfully";
-    msg.style.color = "green";
-
-    document.getElementById("new-user-form").reset();
-    await loadUsers();
+    const data = await res.json();
+    if (data.success) {
+      msg.style.color = "green";
+      msg.textContent = "Registered successfully! Log now";
+      document.getElementById("register-form").reset();
+    } else {
+      msg.style.color = "red";
+      msg.textContent = data.error || "Error during registration";
+    }
   } catch (err) {
-    msg.textContent = "❌Error creating user";
+    console.error(err);
+    msg.textContent = "Connection error";
     msg.style.color = "red";
   }
 }
 
+//login
+async function loginUser(e) {
+  e.preventDefault();
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value.trim();
+  const msg = document.getElementById("auth-message");
+
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+
+    //login failed
+    if (!data.success) {
+      msg.style.color = "red";
+      msg.textContent = data.error || "Login failed";
+      return;
+    }
+
+    //store session data
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user_id", data.user_id);
+    localStorage.setItem("username", username);
+
+    msg.style.color = "green";
+    msg.textContent = "✅ Login successful";
+
+    //hide auth section and show dashboard
+    document.getElementById("auth-seccion").style.display = "none";
+    document.getElementById("logout-section").style.display = "block";
+    document.getElementById("picks-seccion").style.display = "block";
+    document.getElementById("filters-section").style.display = "block";
+
+    //load user dashboard sections
+    await loadPicks();
+    await loadStats();
+    await loadChart();
+  } catch (err) {
+    console.error("Login error:", err);
+    msg.textContent = "Connection error";
+    msg.style.color = "red";
+  }
+}
+
+//Logout
+async function logoutUser() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  try {
+    await fetch("/api/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error) {
+    console.error("Logout error:", err);
+  }
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  alert("Logged out!");
+  location.reload();
+}
+
+//Attach event listeners
+document
+  .getElementById("register-form")
+  .addEventListener("submit", registerUser);
+document.getElementById("login-form").addEventListener("submit", loginUser);
+document.getElementById("logout-btn").addEventListener("click", logoutUser);
+
+//reun session check on load
+document.addEventListener("DOMContentLoaded", checkSession);
+
 //Fetch and display stats for the active user
 async function loadStats() {
   try {
-    //get user
-    const userId = localStorage.getItem("activeUserId");
+    //Authentication data from local storage
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
 
-    if (!userId) {
-      console.warn("No active user selected, cannot load stats");
+    //Prevent fecth if user is not logged in
+    if (!token || !userId) {
+      console.warn("No authenticated session detected");
       document.getElementById("stats-panel").style.display = "none";
       return;
     }
 
     //Fetch stats filtered by user
-    const res = await fetch(`/api/stats?user_id=${userId}`);
+    const res = await fetch(`/api/stats?user_id=${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    //handle backend error
     if (!res.ok) throw new Error("Failed to load stats");
 
     const data = await res.json();
@@ -162,47 +247,58 @@ function renderPicks(picks) {
 async function loadPicks() {
   const loading = document.getElementById("loading");
 
+  //Authentication data from local storage
+  const token = localStorage.getItem("token");
+  const user_id = localStorage.getItem("user_id");
+
+  //prevent fetchs if user is not autehnticated
+  if (!token || !user_id) {
+    loading.textContent = "Please login to view your picks";
+    console.warn("Missing token or user_id");
+    document.getElementById("picks-table").style.display = "none";
+    return;
+  }
+
   try {
-    // Get active user from localStorage
-    const userId = localStorage.getItem("activeUserId");
+    // Fetch users picks
+    const response = await fetch(`/api/picks?user_id=${user_id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-    if (!userId) {
-      loading.textContent = "Select a user to view their picks";
-      console.warn("No active user - cannot load picks");
-      return;
-    }
+    if (!response.ok) throw new Error("Failed to load picks");
 
-    //load picks of the user
-    const response = await fetch(`/api/picks?user_id=${userId}`);
-    if (!renderPicks.ok) throw new Error("Failed to load picks");
-
-    //Parse data and update state
+    //parse data and update state
     const data = await response.json();
-    allPicks = data; //Keep dataset in memory
+    allPicks = data; //keep complete dataset in memory
     filteredPicks = [...allPicks];
 
     //render picks
     renderPicks(filteredPicks);
-    console.log(`✅Loaded ${filteredPicks.length} picks for user ${userId}`);
-  } catch (error) {
+
+    //update UI and logs
+    loading.style.display = "none";
+    document.getElementById("picks-table").style.display = "table";
+    console.log(`✅Loaded ${filteredPicks.length} picks for user ${user_id}`);
+  } catch (err) {
     loading.textContent = "Error loading picks";
-    console.error("Error loading picks:", error);
+    console.error("Error loading picks:", err);
   }
 }
 
 //Handle create new pick with stake)
-
 async function createPick(event) {
   event.preventDefault();
 
-  //get the user
-  const user_id = localStorage.getItem("activeUserId");
+  //Authentication data from local storage
+  const token = localStorage.getItem("token");
+  const user_id = localStorage.getItem("user_id");
   const message = document.getElementById("form-message");
 
   //prevent submission if no user
-  if (!user_id) {
-    message.textContent = "Please select a user before adding pick";
+  if (!token || !user_id) {
+    message.textContent = "Please log in before adding picks";
     message.style.color = "red";
+    console.warn("Attemptend to create pick without authentication");
     return;
   }
 
@@ -223,7 +319,10 @@ async function createPick(event) {
   try {
     const response = await fetch("/api/picks", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({
         team,
         bet,
@@ -242,13 +341,15 @@ async function createPick(event) {
     const tbody = document.getElementById("picks-body");
     tbody.prepend(createRow(result.pick)); //adds pick instantly
 
+    //reset form
     message.textContent = "✅ Pick added successfully!";
     message.style.color = "green";
     document.getElementById("new-pick-form").reset();
 
-    //refresh stats after adding new pick
+    //refresh stats and chart after adding new pick
     await loadStats();
-    console.log(`✅Pick created for user ${user_id}`);
+    await loadChart();
+    console.log(`✅Pick created successfuly for user ${user_id}`);
   } catch (err) {
     console.error(err);
     message.textContent = "Error adding pick";
@@ -299,14 +400,36 @@ let performanceChart;
 
 async function loadChart() {
   try {
-    const res = await fetch("/api/picks");
+    //Authentication data from local storage
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user_id");
+
+    //Prevent if user is not logged in
+    if (!token || !userId) {
+      console.warn("No authenticated session");
+      return;
+    }
+
+    //Fetchs picks
+    const res = await fetch(`/api/picks?user_id=${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to load chart data");
+
     const picks = await res.json();
 
-    if (!picks.length) return;
+    //stop if no data exist
+    if (!picks.length) {
+      console.log("No picks avalible to generate chart");
+      document.getElementById("chart-section").style.display = "none";
+      return;
+    }
 
+    //prepare data chart
     const ctx = document.getElementById("performanceChart").getContext("2d");
-
-    //prepare data
     const labels = picks.map((p) => p.team);
     const profitData = picks.map((p) => p.profitLoss);
 
@@ -350,6 +473,7 @@ async function loadChart() {
     });
     //show chart section
     document.getElementById("chart-section").style.display = "block";
+    console.log(`📈 Chart updated successfully for user ${userId}`);
   } catch (err) {
     console.error("Error loading chart:", err);
   }
@@ -498,30 +622,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  //handle Users
-  document.getElementById("refresh-users").addEventListener("click", loadUsers);
-  document
-    .getElementById("new-user-form")
-    .addEventListener("submit", createUser);
+  //Load dash board data if a valid token exists
+  document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("token");
 
-  document.getElementById("user-select").addEventListener("change", (e) => {
-    const activeUserId = e.target.value;
-    localStorage.setItem("activeUserId", activeUserId);
-    console.log(`Active user: ${activeUserId}`);
-    loadPicks();
-    loadStats();
-    loadChart();
+    //attach form listeners
+    const pickForm = document.getElementById("new-pick-form");
+    if (!pickForm) pickForm.addEventListener("submit", createPick);
+
+    setupFilters();
+
+    if (token) {
+      console.log("Authenticated session detected");
+      await loadPicks();
+      await loadStats();
+      await loadChart();
+    } else {
+      console.log("No toekn, user must login first");
+    }
   });
-
-  // Handle form submission for new picks
-  document
-    .getElementById("new-pick-form")
-    .addEventListener("submit", createPick);
-
-  // Load initial data
-  loadUsers();
-  loadPicks();
-  loadStats();
-  loadChart();
-  setupFilters();
 });
