@@ -1,6 +1,8 @@
 //api/picks.js - SQL-backend
 import { getDb } from "../db/connect.js";
 import { verifySession } from "./middleware/auth.js";
+import { calculatePossibleWin } from "./oddsUtils.js";
+import { parseOdds } from "./oddsUtils.js";
 
 function sendJSON(res, code, payload) {
   res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
@@ -61,38 +63,20 @@ export async function handlePicks(req, res) {
 
           stake = parseFloat(stake);
 
-          // Normalize odds
-          let numOdds;
-          if (typeof odds === "number") {
-            numOdds = odds;
-          } else {
-            const normalized = String(odds ?? "")
-              .replace(",", ".")
-              .trim();
-            numOdds = Number(normalized);
+          // Normalize odds as string
+          const oddsString = String(odds ?? "").trim();
+
+          //Convert odds to decimal
+          const decimalOdds = parseOdds(oddsString);
+          if (!decimalOdds) {
+            return sendJSON(res, 400, { error: "Invalid odds format" });
           }
 
-          //Validate required fields
+          //Calculate possible win
+          const possible_win = calculatePossibleWin(stake, oddsString);
 
-          if (
-            !team ||
-            !bet ||
-            Number.isNaN(numOdds) ||
-            Number.isNaN(stake) ||
-            !league ||
-            !match_date
-          ) {
-            return sendJSON(res, 400, {
-              error:
-                "Invalid body. Expected { team: string, bet: string, odds: number, result?: string }",
-            });
-          }
-
-          //Calculate derived values
-          const possibleWin = stake * numOdds;
+          //New pick start at 0 profitloss
           let profitLoss = 0;
-          if (result === "won") profitLoss = possibleWin - stake;
-          else if (result === "lost") profitLoss = -stake;
 
           // Insert pick with new fields
           const sql = `
@@ -103,9 +87,9 @@ export async function handlePicks(req, res) {
             .run(
               team,
               bet,
-              numOdds,
+              oddsString,
               stake,
-              possibleWin,
+              possible_win,
               profitLoss,
               result,
               league,
@@ -140,21 +124,34 @@ export async function handlePicks(req, res) {
           const pick = db.prepare("SELECT * FROM picks WHERE id = ?").get(id);
           if (!pick) return sendJSON(res, 404, { error: "Pick not found" });
 
-          //updated fields
-          const newOdds = odds ?? pick.odds;
-          const newStake = stake ?? pick.stake;
-          const possibleWin = newStake * newOdds;
+          const newOddsString = String(odds ?? pick.odds).trim();
+          const newStake = stake != null ? parseFloat(stake) : pick.stake;
+
+          const decimalOdds = parseOdds(newOddsString);
+          if (!decimalOdds) {
+            return sendJSON(res, 400, { error: "Invalid odds format" });
+          }
+
+          const possibleWin = calculatePossibleWin(newStake, newOddsString);
+
           let profitLoss = pick.profitLoss;
+          if (result === "won") {
+            profitLoss = possibleWin - newStake;
+          } else if (result === "lost") {
+            profitLoss = -newStake;
+          } else if (result === "pending") {
+            profitLoss = 0;
+          }
 
-          if (result === "won") profitLoss = possibleWin - newStake;
-          else if (result === "lost") profitLoss = -newStake;
-          else if (result === "pendig") profitLoss = 0;
+          const sql = `
+            UPDATE picks
+            SET result = ?, odds = ?, stake = ?, possibleWin = ?, profitLoss = ?
+            WHERE id = ?
+          `;
 
-          //update record
-          const sql = `UPDATE picks SET result = ?, odds = ?, stake = ?, possibleWin = ?, profitLoss = ? WHERE id = ?`;
           db.prepare(sql).run(
             result ?? pick.result,
-            newOdds,
+            newOddsString,
             newStake,
             possibleWin,
             profitLoss,

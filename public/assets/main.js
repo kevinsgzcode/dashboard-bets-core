@@ -25,6 +25,35 @@ async function sha256(str) {
   return hashHex;
 }
 
+function americanToDecimal(odds) {
+  const value = Number(odds);
+  if (isNaN(value)) return null;
+
+  if (value > 0) return 1 + value / 100;
+  if (value < 0) return 1 + 100 / Math.abs(value);
+
+  return null;
+}
+
+function parseOdds(rawOdds) {
+  const str = String(rawOdds).trim();
+
+  if (str.startsWith("+") || str.startsWith("-")) {
+    return americanToDecimal(str);
+  }
+
+  const dec = Number(str);
+  if (!isNaN(dec) && dec > 1.0) return dec;
+
+  return null;
+}
+
+function calculatePossibleWin(stake, rawOdds) {
+  const decimal = parseOdds(rawOdds);
+  if (!decimal) return 0;
+  return stake * decimal;
+}
+
 //hash password + salt
 async function hashPassword(password) {
   return await sha256(password + FRONTEND_SALT);
@@ -259,19 +288,48 @@ async function createPick(e) {
 
   const team = document.getElementById("team").value.trim();
 
-  //validation
+  //validation autocomplete
   if (!nflTeamList.includes(team)) {
     msg.textContent = "Please select a valid team";
     msg.style.color = "red";
     return;
   }
+
   const bet = document.getElementById("bet").value.trim();
-  const odds = parseFloat(document.getElementById("odds").value);
+  const odds = document.getElementById("odds").value.trim();
   const stake = parseFloat(document.getElementById("stake").value);
   const league = document.getElementById("league").value;
   const match_date = document.getElementById("match_date").value;
 
-  if (!team || !bet || isNaN(odds) || isNaN(stake) || !league || !match_date) {
+  //odds validation for american an decimal
+  const oddsPattern = /^(\+|-)?\d+(\.\d+)?$/;
+
+  if (!oddsPattern.test(odds)) {
+    msg.textContent = "Invalid odds format. Use formats like -110 or +150, etc";
+    msg.style.color = "red";
+    return;
+  }
+
+  const oddsValue = Number(odds);
+
+  if (odds.startsWith("+") || odds.startsWith("-")) {
+    //American odds
+    if (Math.abs(oddsValue) < 100) {
+      msg.textContent = "American odds must be ≥ +100 or ≤ -100.";
+      msg.style.color = "red";
+      return;
+    }
+  } else {
+    //decimal or integer
+    if (oddsValue < 1.01) {
+      msg.textContent = "Decimal odds must be greater than 1.01.";
+      msg.style.color = "red";
+      return;
+    }
+  }
+
+  //general validation
+  if (!team || !bet || !odds || isNaN(stake) || !league || !match_date) {
     msg.textContent = "Fill all fields correctly";
     msg.style.color = "red";
     return;
@@ -357,10 +415,10 @@ function createRow(pick) {
     <td>${pick.league}</td>
     <td>${pick.team}</td>
     <td>${pick.bet}</td>
-    <td>${pick.odds.toFixed(2)}</td>
-    <td>${pick.stake.toFixed(2)}</td>
-    <td>${pick.possibleWin.toFixed(2)}</td>
-    <td style="color:${profitColor}">${pick.profitLoss.toFixed(2)}</td>
+    <td>${pick.odds}</td>
+    <td>${Number(pick.stake).toFixed(2)}</td>
+    <td>${Number(pick.possibleWin).toFixed(2)}</td>
+    <td style="color:${profitColor}">${Number(pick.profitLoss).toFixed(2)}</td>
     <td>${formattedDate}</td>
     <td>${pick.result}</td>
     <td><button class="delete-btn" data-id="${pick.id}">Delete</button></td>
@@ -599,7 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (league === "NFL") {
       nflTeamList = await fetchNFLTeams(); //save global list
 
-      teamInput.value - "";
+      teamInput.value = "";
       suggestions.innerHTML = "";
       suggestions.style.display = "none";
     }
