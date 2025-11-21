@@ -431,7 +431,65 @@ async function loadChart() {
   }
 }
 
-// 11. FILTERS
+//fetch Nfl Teams
+async function fetchNFLTeams() {
+  const fallbackNFL = [
+    "Arizona Cardinals",
+    "Atlanta Falcons",
+    "Baltimore Ravens",
+    "Buffalo Bills",
+    "Carolina Panthers",
+    "Chicago Bears",
+    "Cincinnati Bengals",
+    "Cleveland Browns",
+    "Dallas Cowboys",
+    "Denver Broncos",
+    "Detroit Lions",
+    "Green Bay Packers",
+    "Houston Texans",
+    "Indianapolis Colts",
+    "Jacksonville Jaguars",
+    "Kansas City Chiefs",
+    "Las Vegas Raiders",
+    "Los Angeles Chargers",
+    "Los Angeles Rams",
+    "Miami Dolphins",
+    "Minnesota Vikings",
+    "New England Patriots",
+    "New Orleans Saints",
+    "New York Giants",
+    "New York Jets",
+    "Philadelphia Eagles",
+    "Pittsburgh Steelers",
+    "San Francisco 49ers",
+    "Seattle Seahawks",
+    "Tampa Bay Buccaneers",
+    "Tennessee Titans",
+    "Washington Commanders",
+  ];
+
+  try {
+    const res = await fetch(
+      "https://www.thesportsdb.com/api/v1/json/3/search_all_teams.php?l=NFL"
+    );
+
+    const data = await res.json();
+
+    if (Array.isArray(data.teams)) {
+      const teams = data.teams.map((t) => t.strTeam).sort();
+      console.log("🏈 NFL teams loaded from API", teams.length);
+      return teams;
+    }
+    //API Return null
+    console.warn("⚠️ API return null, using fallback");
+    return fallbackNFL.sort();
+  } catch (err) {
+    console.log("❌ NFL API failed, using fallback".err);
+    return fallbackNFL.sort();
+  }
+}
+
+// FILTERS
 function setupFilters() {
   document.getElementById("filterTeam").addEventListener("input", applyFilters);
   document
@@ -480,86 +538,33 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("new-pick-form")
     .addEventListener("submit", createPick);
 
-  setupFilters();
-
   const leagueSelect = document.getElementById("league");
 
   leagueSelect.addEventListener("change", async (e) => {
     const league = e.target.value;
-    if (!league) return;
-
     const teamSelect = document.getElementById("team");
+
+    if (!league) {
+      teamSelect.innerHTML = "<option value=''>Select a team</option>";
+      return;
+    }
+    //Show loading
     teamSelect.innerHTML = "<option value=''>Loading teams...</option>";
-
-    //Fallback list
-    const nflTeams = [
-      "Arizona Cardinals",
-      "Atlanta Falcons",
-      "Baltimore Ravens",
-      "Buffalo Bills",
-      "Carolina Panthers",
-      "Chicago Bears",
-      "Cincinnati Bengals",
-      "Cleveland Browns",
-      "Dallas Cowboys",
-      "Denver Broncos",
-      "Detroit Lions",
-      "Green Bay Packers",
-      "Houston Texans",
-      "Indianapolis Colts",
-      "Jacksonville Jaguars",
-      "Kansas City Chiefs",
-      "Las Vegas Raiders",
-      "Los Angeles Chargers",
-      "Los Angeles Rams",
-      "Miami Dolphins",
-      "Minnesota Vikings",
-      "New England Patriots",
-      "New Orleans Saints",
-      "New York Giants",
-      "New York Jets",
-      "Philadelphia Eagles",
-      "Pittsburgh Steelers",
-      "San Francisco 49ers",
-      "Seattle Seahawks",
-      "Tampa Bay Buccaneers",
-      "Tennessee Titans",
-      "Washington Commanders",
-    ];
-
-    try {
-      const leagueName = league === "NFL" ? "National Football League" : league;
-
-      const res = await fetch(
-        `https://www.thesportsdb.com/api/v1/json/3/search_all_teams.php?l=${encodeURIComponent(
-          leagueName
-        )}`
-      );
-
-      const data = await res.json();
-      let teams = [];
-
-      if (Array.isArray(data.teams)) {
-        teams = data.teams.map((t) => t.strTeam);
-        console.log(`Loaded ${teams.length} teams from API`);
-      } else {
-        console.warn("API returned null, using local fallback list");
-        teams = nflTeams;
-      }
+    if (league === "NFL") {
+      const teams = await fetchNFLTeams();
 
       teamSelect.innerHTML = "<option value=''>Select a team</option>";
+
       teams.forEach((team) => {
         const option = document.createElement("option");
         option.value = team;
         option.textContent = team;
         teamSelect.appendChild(option);
       });
-    } catch (err) {
-      console.error("Error loading teams:", err);
-      teamSelect.innerHTML = "<option value=''>Error loading teams</option>";
     }
   });
 
+  setupFilters();
   checkSession();
 
   // Delete pick delegation
