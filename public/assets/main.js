@@ -4,6 +4,7 @@
 let allPicks = [];
 let filteredPicks = [];
 let performanceChart = null;
+let nflTeamList = [];
 
 //Global salt
 const FRONTEND_SALT = "BETSCORE_s$9!Qp7Z2@xF1vT";
@@ -257,6 +258,13 @@ async function createPick(e) {
   }
 
   const team = document.getElementById("team").value.trim();
+
+  //validation
+  if (!nflTeamList.includes(team)) {
+    msg.textContent = "Please select a valid team";
+    msg.style.color = "red";
+    return;
+  }
   const bet = document.getElementById("bet").value.trim();
   const odds = parseFloat(document.getElementById("odds").value);
   const stake = parseFloat(document.getElementById("stake").value);
@@ -538,6 +546,44 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("new-pick-form")
     .addEventListener("submit", createPick);
 
+  const teamInput = document.getElementById("team");
+  const suggestions = document.getElementById("team-suggestions");
+
+  teamInput.addEventListener("input", () => {
+    const value = teamInput.value.toLowerCase();
+
+    if (!value) {
+      suggestions.style.display = "none";
+      suggestions.innerHTML = "";
+      return;
+    }
+
+    //filter teams
+    const filtered = nflTeamList.filter((t) => t.toLowerCase().includes(value));
+
+    if (filtered.length === 0) {
+      suggestions.style.display = "none";
+      suggestions.innerHTML = "";
+      return;
+    }
+
+    suggestions.innerHTML = "";
+    suggestions.style.display = "block";
+
+    filtered.forEach((team) => {
+      const div = document.createElement("div");
+      div.classList.add("autocomplete-item");
+      div.textContent = team;
+
+      div.addEventListener("click", () => {
+        teamInput.value = team;
+        suggestions.innerHTML = "";
+        suggestions.style.display = "none";
+      });
+      suggestions.appendChild(div);
+    });
+  });
+
   const leagueSelect = document.getElementById("league");
 
   leagueSelect.addEventListener("change", async (e) => {
@@ -551,16 +597,11 @@ document.addEventListener("DOMContentLoaded", () => {
     //Show loading
     teamSelect.innerHTML = "<option value=''>Loading teams...</option>";
     if (league === "NFL") {
-      const teams = await fetchNFLTeams();
+      nflTeamList = await fetchNFLTeams(); //save global list
 
-      teamSelect.innerHTML = "<option value=''>Select a team</option>";
-
-      teams.forEach((team) => {
-        const option = document.createElement("option");
-        option.value = team;
-        option.textContent = team;
-        teamSelect.appendChild(option);
-      });
+      teamInput.value - "";
+      suggestions.innerHTML = "";
+      suggestions.style.display = "none";
     }
   });
 

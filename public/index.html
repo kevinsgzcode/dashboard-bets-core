@@ -67,7 +67,7 @@
       <section id="picks-section" style="display: none">
         <div id="loading">Loading picks...</div>
 
-        <!-- GRID LAYOUT (70/30) -->
+        <!-- GRID LAYOUT -->
         <div class="top-grid">
           <!-- LEFT SIDE (STATS + CHART) -->
           <div class="left-column">
@@ -127,9 +127,16 @@
                 </select>
 
                 <label>Team:</label>
-                <select id="team" required>
-                  <option value="">Select a team</option>
-                </select>
+                <div class="autocomplete-container">
+                  <input
+                    type="text"
+                    id="team"
+                    autocomplete="off"
+                    placeholder="Start typing team..."
+                    required
+                  />
+                  <div id="team-suggestions" class="autocomplete-list"></div>
+                </div>
 
                 <label>Bet type:</label>
                 <input type="text" id="bet" required />

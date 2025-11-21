@@ -217,7 +217,6 @@ h3 {
   width: 100%;
   box-sizing: border-box;
 
-  /* Ocupa toda la altura de la columna derecha */
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -254,6 +253,34 @@ h3 {
 
 #new-pick-form button:hover {
   background-color: #1e40af;
+}
+
+/*============= New Pick Form =============*/
+.autocomplete-container {
+  position: relative;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 50;
+  display: none;
+}
+
+.autocomplete-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.autocomplete-item:hover {
+  background-color: #f3f4f6;
 }
 
 /* ============ FILTERS + TABLE============ */
