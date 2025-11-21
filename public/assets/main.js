@@ -46,6 +46,8 @@ async function checkSession() {
     document.getElementById("picks-section").style.display = "block";
     document.getElementById("filters-and-table").style.display = "block";
     document.getElementById("new-pick-section").style.display = "block";
+    document.getElementById("user-display").textContent =
+      "Welcome " + localStorage.getItem("username");
 
     await loadPicks();
     await loadStats();
@@ -140,6 +142,8 @@ async function loginUser(e) {
     document.getElementById("picks-section").style.display = "block";
     document.getElementById("filters-and-table").style.display = "block";
     document.getElementById("new-pick-section").style.display = "block";
+    document.getElementById("user-display").textContent =
+      "Welcome " + localStorage.getItem("username");
 
     await loadPicks();
     await loadStats();

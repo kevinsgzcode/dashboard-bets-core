@@ -192,6 +192,12 @@ h3 {
   gap: 18px;
 }
 
+.user-display {
+  font-size: 0.95rem;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
 .stats-grid div {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
