@@ -5,6 +5,30 @@ let allPicks = [];
 let filteredPicks = [];
 let performanceChart = null;
 
+//Global salt
+const FRONTEND_SALT = "BETSCORE_s$9!Qp7Z2@xF1vT";
+
+// Hashing implementation
+async function sha256(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return hashHex;
+}
+
+//hash password + salt
+async function hashPassword(password) {
+  return await sha256(password + FRONTEND_SALT);
+}
+
 //  SESSION CHECK ON LOAD
 async function checkSession() {
   const token = localStorage.getItem("token");
@@ -49,10 +73,13 @@ async function registerUser(e) {
   const msg = document.getElementById("auth-message");
 
   try {
+    //frontend hashing
+    const hashedPassword = await hashPassword(password);
+
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, initialBank }),
+      body: JSON.stringify({ username, password: hashedPassword, initialBank }),
     });
 
     const data = await res.json();
@@ -81,10 +108,13 @@ async function loginUser(e) {
   const msg = document.getElementById("auth-message");
 
   try {
+    //frontend hashing
+    const hashedPassword = await hashPassword(password);
+
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password: hashedPassword }),
     });
 
     const data = await res.json();
