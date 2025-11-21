@@ -383,12 +383,23 @@ async function loadChart() {
     if (!res.ok) throw new Error();
 
     const picks = await res.json();
+
+    const chartSection = document.getElementById("chart-section");
+    const emptyMsgx = document.getElementById("chart-empty");
+    const canvas = document.getElementById("performanceChart");
+
+    const ctx = document.getElementById("performanceChart").getContext("2d");
     if (!picks.length) {
-      document.getElementById("chart-section").style.display = "none";
+      if (performanceChart) performanceChart.destroy();
+
+      chartSection.style.display = "block";
+      emptyMsgx.style.display = "block";
+      canvas.style.display = "none";
       return;
     }
 
-    const ctx = document.getElementById("performanceChart").getContext("2d");
+    emptyMsgx.style.display = "none";
+    canvas.style.display = "block";
 
     if (performanceChart) performanceChart.destroy();
 
