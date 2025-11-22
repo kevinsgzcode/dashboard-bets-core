@@ -594,7 +594,6 @@ function applyFilters() {
 }
 
 // 12. INITIALIZE
-
 document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("register-form")
@@ -605,6 +604,33 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("new-pick-form")
     .addEventListener("submit", createPick);
+
+  document
+    .getElementById("update-results-btn")
+    .addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Log in first");
+        return;
+      }
+      try {
+        const res = await fetch("/api/update-results", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        console.log("RESULTS UPDATED:", data);
+        alert(`Results updated: ${data.updated}`);
+
+        await loadPicks();
+        await loadStats();
+        await loadChart();
+      } catch (err) {
+        console.error("Update results error:", err);
+        alert("Error updating results");
+      }
+    });
 
   const teamInput = document.getElementById("team");
   const suggestions = document.getElementById("team-suggestions");

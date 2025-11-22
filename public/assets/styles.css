@@ -172,6 +172,23 @@ h3 {
   display: flex;
 }
 
+/* Update Resultas */
+.update-btn {
+  width: 100%;
+  background: #1d4ed8;
+  padding: 12px 0;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.update-btn:hover {
+  background: #1e40af;
+}
+
 /* ============ CARDS ============ */
 
 #stats-panel,

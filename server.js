@@ -1,5 +1,6 @@
 // server.js — Minimal Node.js HTTP server
 import http from "http";
+import https from "https";
 import fs from "fs/promises";
 import { handlePicks } from "./api/picks.js";
 import { handleStats } from "./api/stats.js";
@@ -54,6 +55,37 @@ const server = http.createServer(async (req, res) => {
     return handleStats(req, res);
   }
 
+  // --- INTERNAL PROXY FOR ODDS API ---
+  if (req.url.startsWith("/api/proxy")) {
+    const urlObj = new URL(req.url, `http://localhost:${PORT}`);
+    const target = urlObj.searchParams.get("url");
+
+    if (!target) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Missing url param" }));
+    }
+
+    console.log("🔁 Proxying request to:", target);
+
+    https
+      .get(target, (proxyRes) => {
+        let data = "";
+
+        proxyRes.on("data", (chunk) => (data += chunk));
+        proxyRes.on("end", () => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(data);
+        });
+      })
+      .on("error", (err) => {
+        console.error("❌ Proxy error:", err);
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Proxy failed" }));
+      });
+
+    return;
+  }
+
   // Ignore Chrome DevTools and favicon requests
   if (req.url.includes(".well-known") || req.url === "/favicon.ico") {
     res.writeHead(204); // No Content
@@ -91,29 +123,29 @@ const server = http.createServer(async (req, res) => {
 });
 
 //Fuction to auto-update pending picks at startup
-async function autoUpdatePicks() {
-  try {
-    console.log("🔄 Checking pending pick");
-    // Simulate an internal GET request to /api/update-result
-    const fakeReq = { method: "GET", url: "/api/update-results", headers: {} };
-    const fakeRes = {
-      writeHead: () => {},
-      end: (msg) => {
-        console.log("✅ Auto-Update response:", msg);
-      },
-    };
-    await handleUpdateResults(fakeReq, fakeRes);
-    console.log("Auto-Update completed succesfully");
-  } catch (err) {
-    console.error("Auto-Update error:", err);
-  }
-}
+//Now is not working because the credits of free API
+//async function autoUpdatePicks() {
+//  try {
+//    console.log("🔄 Checking pending pick");
+//   // Simulate an internal GET request to /api/update-result
+//    const fakeReq = { method: "GET", url: "/api/update-results", headers: {} };
+//    const fakeRes = {
+//      writeHead: () => {},
+//      end: (msg) => {
+//        console.log("✅ Auto-Update response:", msg);
+//      },
+//    };
+//    await handleUpdateResults(fakeReq, fakeRes);
+//    console.log("Auto-Update completed succesfully");
+//  } catch (err) {
+//    console.error("Auto-Update error:", err);
+//  }
+//}
 
 //Auto-setup before starting the server
 (async () => {
   setupDataBase(); //ensure DB & table exist
-  await autoUpdatePicks(); //run auto-update after DB is ready
-
+  //await autoUpdatePicks(); //run auto-update after DB is ready
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
