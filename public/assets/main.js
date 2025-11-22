@@ -399,6 +399,11 @@ async function deletePick(id) {
     alert("Error deleting pick");
   }
 }
+//convert 'YYYY-MM-DD' to 'MM/DD/YYYY'
+function formatDateDisplay(dateStr) {
+  const [year, month, day] = dateStr.split("-");
+  return `${month}/${day}/${year}`;
+}
 
 //  RENDER TABLE
 function createRow(pick) {
@@ -408,7 +413,7 @@ function createRow(pick) {
     pick.profitLoss > 0 ? "green" : pick.profitLoss < 0 ? "red" : "gray";
 
   const formattedDate = pick.match_date
-    ? new Date(pick.match_date).toLocaleDateString("en-US")
+    ? formatDateDisplay(pick.match_date)
     : "-";
 
   row.innerHTML = `
@@ -577,13 +582,10 @@ function applyFilters() {
     const matchesTeam = team ? p.team.toLowerCase().includes(team) : true;
     const matchesResult = result ? p.result === result : true;
 
-    const date = p.match_date ? new Date(p.match_date) : null;
-    const fromDate = from ? new Date(from) : null;
-    const toDate = to ? new Date(to) : null;
-
+    //string comparison
     const matchesDate =
-      (!fromDate || (date && date >= fromDate)) &&
-      (!toDate || (date && date <= toDate));
+      (!from || (p.match_date && p.match_date >= from)) &&
+      (!to || (p.match_date && p.match_date <= to));
 
     return matchesTeam && matchesResult && matchesDate;
   });
