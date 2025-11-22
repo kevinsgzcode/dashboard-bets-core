@@ -1,6 +1,7 @@
 //Auto-update pending picks based on real match results
 import { getDb } from "../db/connect.js";
 import https from "https";
+import { parseOdds, calculatePossibleWin } from "./oddsUtils.js";
 
 // Helper function to fetch JSON reuses the same pattern from /api/scores
 async function fetchJSON(url) {
@@ -32,9 +33,11 @@ export async function handleUpdateResults(req, res) {
     const db = getDb();
 
     //Fetch all picks still pending
-    const pendingPicks = db.prepare(
-      "SELECT id, team, stake, odds FROM picks WHERE result = 'pending'"
-    ).all();
+    const pendingPicks = db
+      .prepare(
+        "SELECT id, team, stake, odds FROM picks WHERE result = 'pending'"
+      )
+      .all();
 
     if (pendingPicks.length === 0) {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -99,17 +102,21 @@ export async function handleUpdateResults(req, res) {
         if (result === "pending") continue;
 
         //Calculate profit/loss and update DB
-        const possibleWin = stake * odds;
+        const decimal0dds = parseOdds(odds);
+        if (!decimal0dds) {
+          console.error(`❌ Invalid odds format for ${team}`, odds);
+          continue;
+        }
+
+        //possible win using your sportbook logic
+        const possibleWin = calculatePossibleWin(stake, odds);
+
+        //profit/loss
         const profitLoss = result === "won" ? possibleWin - stake : -stake;
 
         db.prepare(
           `UPDATE picks SET result = ?, possibleWin = ?, profitLoss = ? WHERE id = ?`
-        ).run(
-          result,
-          possibleWin,
-          profitLoss,
-          id
-        );
+        ).run(result, possibleWin, profitLoss, id);
 
         updates.push({
           team,

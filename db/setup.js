@@ -6,20 +6,20 @@ export function setupDataBase() {
   //Picks table
   db.exec(`
     CREATE TABLE IF NOT EXISTS picks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    team TEXT NOT NULL,
-    bet TEXT NOT NULL,
-    odds REAL NOT NULL,
-    stake REAL DEFAULT 0,
-    possibleWin REAL DEFAULT 0,
-    profitLoss REAL DEFAULT 0,
-    result TEXT DEFAULT 'pending',
-    league TEXT DEFAULT 'NFL',
-    match_date TEXT
-    )
-    `);
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      team TEXT NOT NULL,
+      bet TEXT NOT NULL,
+      odds TEXT NOT NULL,        -- <--- FIXED: now TEXT
+      stake REAL DEFAULT 0,
+      possibleWin REAL DEFAULT 0,
+      profitLoss REAL DEFAULT 0,
+      result TEXT DEFAULT 'pending',
+      league TEXT DEFAULT 'NFL',
+      match_date TEXT,
+      user_id INTEGER REFERENCES users(id)
+    );
+  `);
 
-  //Check picks table
   console.log("✅ Table 'picks' created or verified");
 
   // User table
@@ -39,22 +39,6 @@ export function setupDataBase() {
   const pragma = db.prepare("PRAGMA table_info(picks)").all();
   const columns = pragma.map((col) => col.name);
 
-  if (!columns.includes("league")) {
-    db.exec(`ALTER TABLE picks ADD COLUMN league TEXT DEFAULT 'NFL'`);
-    console.log("New column 'league' added");
-  }
-  if (!columns.includes("match_date")) {
-    db.exec(`ALTER TABLE picks ADD COLUMN match_date TEXT`);
-    console.log("New Column 'match_date' added");
-  }
-
-  //Picks - Users
-  if (!columns.includes("user_id")) {
-    db.exec(
-      `ALTER TABLE picks ADD COLUMN user_id INTEGER REFERENCES users(id)`
-    );
-    console.log("New column 'user_id' added to 'picks'");
-  }
   //Sessions table
   db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
