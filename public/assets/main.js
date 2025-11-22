@@ -443,7 +443,7 @@ function renderPicks(picks) {
   picks.forEach((p) => tbody.appendChild(createRow(p)));
 }
 
-// CHART
+//chart
 async function loadChart() {
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("user_id");
@@ -462,11 +462,11 @@ async function loadChart() {
     const chartSection = document.getElementById("chart-section");
     const emptyMsgx = document.getElementById("chart-empty");
     const canvas = document.getElementById("performanceChart");
+    const ctx = canvas.getContext("2d");
 
-    const ctx = document.getElementById("performanceChart").getContext("2d");
+    //Handle empty state
     if (!picks.length) {
       if (performanceChart) performanceChart.destroy();
-
       chartSection.style.display = "block";
       emptyMsgx.style.display = "block";
       canvas.style.display = "none";
@@ -476,27 +476,50 @@ async function loadChart() {
     emptyMsgx.style.display = "none";
     canvas.style.display = "block";
 
+    //GROUP PICKS BY TEAM
+    const teamTotals = {};
+    picks.forEach((p) => {
+      const team = p.team;
+      const profit = Number(p.profitLoss || 0);
+
+      if (!teamTotals[team]) teamTotals[team] = 0;
+      teamTotals[team] += profit;
+    });
+
+    const labels = Object.keys(teamTotals);
+    const data = Object.values(teamTotals);
+
+    // Destroy previous chart
     if (performanceChart) performanceChart.destroy();
 
+    //Create new grouped chart
     performanceChart = new Chart(ctx, {
       type: "bar",
       data: {
-        labels: picks.map((p) => p.team),
+        labels,
         datasets: [
           {
             label: "Profit / Loss",
-            data: picks.map((p) => p.profitLoss),
-            backgroundColor: picks.map((v) =>
-              v >= 0 ? "rgba(0,255,176,0.6)" : "rgba(244,67,54,0.6)"
+            data,
+            backgroundColor: data.map((v) =>
+              v >= 0 ? "rgba(54, 162, 235, 0.7)" : "rgba(255, 99, 132, 0.7)"
             ),
-            borderColor: picks.map((v) => (v >= 0 ? "#00ffb0" : "#f44336")),
+            borderColor: data.map((v) =>
+              v >= 0 ? "rgba(54, 162, 235, 1)" : "rgba(255, 99, 132, 1)"
+            ),
             borderWidth: 1.2,
           },
         ],
       },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true },
+        },
+      },
     });
 
-    document.getElementById("chart-section").style.display = "block";
+    chartSection.style.display = "block";
   } catch (err) {
     console.error("Chart error:", err);
   }
