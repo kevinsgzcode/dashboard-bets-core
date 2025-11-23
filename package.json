@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [],
   "author": "Kevin Salas",
@@ -17,5 +17,11 @@
     "better-sqlite3": "^12.4.1",
     "chart.js": "^4.5.1",
     "sqlite": "^5.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "jest": "^30.2.0"
   }
 }

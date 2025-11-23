@@ -1,5 +1,6 @@
 // Handles: Auth, Picks CRUD, Stats, Chart, Filters
-
+import { parseOdds, calculatePossibleWin } from "../../utils/odds.js";
+import { formatDateDisplay } from "../../utils/date.js";
 // Local state
 let allPicks = [];
 let filteredPicks = [];
@@ -25,34 +26,11 @@ async function sha256(str) {
   return hashHex;
 }
 
-function americanToDecimal(odds) {
-  const value = Number(odds);
-  if (isNaN(value)) return null;
-
-  if (value > 0) return 1 + value / 100;
-  if (value < 0) return 1 + 100 / Math.abs(value);
-
-  return null;
-}
-
-function parseOdds(rawOdds) {
-  const str = String(rawOdds).trim();
-
-  if (str.startsWith("+") || str.startsWith("-")) {
-    return americanToDecimal(str);
-  }
-
-  const dec = Number(str);
-  if (!isNaN(dec) && dec > 1.0) return dec;
-
-  return null;
-}
-
-function calculatePossibleWin(stake, rawOdds) {
-  const decimal = parseOdds(rawOdds);
-  if (!decimal) return 0;
-  return stake * decimal;
-}
+//function calculatePossibleWin(stake, rawOdds) {
+//  const decimal = parseOdds(rawOdds);
+//  if (!decimal) return 0;
+//  return stake * decimal;
+//}
 
 //hash password + salt
 async function hashPassword(password) {
@@ -578,7 +556,7 @@ async function fetchNFLTeams() {
     console.warn("⚠️ API return null, using fallback");
     return fallbackNFL.sort();
   } catch (err) {
-    console.log("❌ NFL API failed, using fallback".err);
+    console.log("❌ NFL API failed, using fallback", err);
     return fallbackNFL.sort();
   }
 }

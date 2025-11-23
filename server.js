@@ -116,7 +116,7 @@ const server = http.createServer(async (req, res) => {
     const data = await fs.readFile(filePath);
     res.writeHead(200, { "Content-Type": contentType });
     res.end(data);
-  } catch (err) {
+  } catch {
     res.writeHead(404, { "Content-Type": "text/plain" });
     res.end("404 Not found");
   }

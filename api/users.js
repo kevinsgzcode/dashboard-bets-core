@@ -3,7 +3,6 @@ import { getDb } from "../db/connect.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { verifySession } from "./middleware/auth.js";
-import { error } from "console";
 
 export async function handleUsers(req, res) {
   const db = getDb();

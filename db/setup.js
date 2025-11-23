@@ -35,10 +35,6 @@ export function setupDataBase() {
   //Check users table
   console.log('✅ Table "users" created or verified');
 
-  //new columns in picks
-  const pragma = db.prepare("PRAGMA table_info(picks)").all();
-  const columns = pragma.map((col) => col.name);
-
   //Sessions table
   db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
