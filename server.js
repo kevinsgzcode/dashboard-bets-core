@@ -2,61 +2,63 @@
 import http from "http";
 import https from "https";
 import fs from "fs/promises";
-import { handlePicks } from "./api/picks.js";
-import { handleStats } from "./api/stats.js";
 import path from "path";
 import { fileURLToPath } from "url";
+
+import { handlePicks } from "./api/picks.js";
+import { handleStats } from "./api/stats.js";
 import { handleScores } from "./api/scores.js";
-import { setupDataBase } from "./db/setup.js";
 import { handleUpdateResults } from "./api/updateResults.js";
 import { handleUsers } from "./api/users.js";
+import { setupDataBase } from "./db/setup.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = 3000;
 
-//async/await lets Node work in the background without stopping while waiting for results.
-
-// Create the server
 const server = http.createServer(async (req, res) => {
-  //Handle API routes
-  if (req.url.startsWith("/api/picks")) {
+  // STEP 1: CLEAN THE URL (Fixes the "/?" Bug)
+  let cleanUrl = req.url.split("?")[0];
+  if (!cleanUrl || cleanUrl === "") cleanUrl = "/";
+
+  console.log("Request URL:", req.url);
+  console.log("Clean URL:", cleanUrl);
+
+  // --- API ROUTES ---
+  if (cleanUrl.startsWith("/api/picks")) {
     return handlePicks(req, res);
   }
 
-  //handle register and login
-  if (req.url.startsWith("/api/register") || req.url.startsWith("/api/login")) {
+  if (
+    cleanUrl.startsWith("/api/register") ||
+    cleanUrl.startsWith("/api/login")
+  ) {
     return handleUsers(req, res);
   }
 
-  //handle users
-  if (req.url.startsWith("/api/users")) {
+  if (cleanUrl.startsWith("/api/users")) {
     return handleUsers(req, res);
   }
 
-  //Handle logout
-  if (req.url.startsWith("/api/logout")) {
+  if (cleanUrl.startsWith("/api/logout")) {
     return handleUsers(req, res);
   }
 
-  //handle scores
-  if (req.url.startsWith("/api/scores")) {
+  if (cleanUrl.startsWith("/api/scores")) {
     return handleScores(req, res);
   }
 
-  //handle Update Results
-  if (req.url.startsWith("/api/update-results")) {
+  if (cleanUrl.startsWith("/api/update-results")) {
     return handleUpdateResults(req, res);
   }
 
-  //Handle stats
-  if (req.url.startsWith("/api/stats")) {
+  if (cleanUrl.startsWith("/api/stats")) {
     return handleStats(req, res);
   }
 
-  // --- INTERNAL PROXY FOR ODDS API ---
-  if (req.url.startsWith("/api/proxy")) {
+  // --- INTERNAL PROXY FOR ODDS ---
+  if (cleanUrl.startsWith("/api/proxy")) {
     const urlObj = new URL(req.url, `http://localhost:${PORT}`);
     const target = urlObj.searchParams.get("url");
 
@@ -70,7 +72,6 @@ const server = http.createServer(async (req, res) => {
     https
       .get(target, (proxyRes) => {
         let data = "";
-
         proxyRes.on("data", (chunk) => (data += chunk));
         proxyRes.on("end", () => {
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -86,22 +87,20 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Ignore Chrome DevTools and favicon requests
-  if (req.url.includes(".well-known") || req.url === "/favicon.ico") {
-    res.writeHead(204); // No Content
+  // Ignore Chrome DevTools and favicon
+  if (cleanUrl === "/favicon.ico" || cleanUrl.includes(".well-known")) {
+    res.writeHead(204);
     return res.end();
   }
 
-  //Static files
+  // --- STATIC FILES (fix for /?) ---
   const filePath = path.join(
     __dirname,
     "public",
-    req.url === "/" ? "index.html" : req.url
+    cleanUrl === "/" ? "index.html" : cleanUrl
   );
-  const ext = path.extname(filePath);
 
-  // Map file extensions to proper MIME types
-  // This ensures the browser renders HTML, CSS, JS, and JSON correctly
+  const ext = path.extname(filePath);
   const contentType =
     {
       ".html": "text/html",
@@ -111,8 +110,7 @@ const server = http.createServer(async (req, res) => {
     }[ext] || "text/plain";
 
   try {
-    console.log("Request URL:", req.url); //try to find bugs
-    console.log("Resolved filePath:", filePath); //try to find bugs
+    console.log("Resolved filePath:", filePath);
     const data = await fs.readFile(filePath);
     res.writeHead(200, { "Content-Type": contentType });
     res.end(data);
@@ -122,30 +120,9 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-//Fuction to auto-update pending picks at startup
-//Now is not working because the credits of free API
-//async function autoUpdatePicks() {
-//  try {
-//    console.log("🔄 Checking pending pick");
-//   // Simulate an internal GET request to /api/update-result
-//    const fakeReq = { method: "GET", url: "/api/update-results", headers: {} };
-//    const fakeRes = {
-//      writeHead: () => {},
-//      end: (msg) => {
-//        console.log("✅ Auto-Update response:", msg);
-//      },
-//    };
-//    await handleUpdateResults(fakeReq, fakeRes);
-//    console.log("Auto-Update completed succesfully");
-//  } catch (err) {
-//    console.error("Auto-Update error:", err);
-//  }
-//}
-
-//Auto-setup before starting the server
+// Start the server
 (async () => {
-  setupDataBase(); //ensure DB & table exist
-  //await autoUpdatePicks(); //run auto-update after DB is ready
+  setupDataBase();
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });

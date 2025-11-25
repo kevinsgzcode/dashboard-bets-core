@@ -1,6 +1,6 @@
 // Handles: Auth, Picks CRUD, Stats, Chart, Filters
-import { parseOdds, calculatePossibleWin } from "../../utils/odds.js";
-import { formatDateDisplay } from "../../utils/date.js";
+//import { parseOdds, calculatePossibleWin } from "../../utils/odds.js";
+//import { formatDateDisplay } from "../../utils/date.js";
 // Local state
 let allPicks = [];
 let filteredPicks = [];
@@ -73,7 +73,7 @@ async function checkSession() {
   }
 }
 
-//  REGISTER
+// -------------------- REGISTER --------------------
 async function registerUser(e) {
   e.preventDefault();
 
@@ -83,7 +83,6 @@ async function registerUser(e) {
   const msg = document.getElementById("auth-message");
 
   try {
-    //frontend hashing
     const hashedPassword = await hashPassword(password);
 
     const res = await fetch("/api/register", {
@@ -109,7 +108,7 @@ async function registerUser(e) {
   }
 }
 
-//  LOGIN
+// -------------------- LOGIN --------------------
 async function loginUser(e) {
   e.preventDefault();
 
@@ -118,7 +117,6 @@ async function loginUser(e) {
   const msg = document.getElementById("auth-message");
 
   try {
-    //frontend hashing
     const hashedPassword = await hashPassword(password);
 
     const res = await fetch("/api/login", {
@@ -128,6 +126,7 @@ async function loginUser(e) {
     });
 
     const data = await res.json();
+    console.log("LOGIN RESPONSE:", data);
 
     if (!data.success) {
       msg.style.color = "red";
@@ -135,7 +134,7 @@ async function loginUser(e) {
       return;
     }
 
-    // Store session data
+    // Save session
     localStorage.setItem("token", data.token);
     localStorage.setItem("user_id", data.user_id);
     localStorage.setItem("username", username);
@@ -143,19 +142,8 @@ async function loginUser(e) {
     msg.style.color = "green";
     msg.textContent = "Login successful!";
 
-    // Show dashboard
-    document.getElementById("auth-section").style.display = "none";
-    document.getElementById("dashboard-container").style.display = "block";
-    document.getElementById("logout-section").style.display = "block";
-    document.getElementById("picks-section").style.display = "block";
-    document.getElementById("filters-and-table").style.display = "block";
-    document.getElementById("new-pick-section").style.display = "block";
-    document.getElementById("user-display").textContent =
-      "Welcome " + localStorage.getItem("username");
-
-    await loadPicks();
-    await loadStats();
-    await loadChart();
+    // Force UI update
+    await checkSession();
   } catch (err) {
     console.error("Login error:", err);
     msg.textContent = "Connection error";
@@ -163,7 +151,7 @@ async function loginUser(e) {
   }
 }
 
-//  LOGOUT
+// -------------------- LOGOUT --------------------
 async function logoutUser() {
   const token = localStorage.getItem("token");
 
@@ -177,7 +165,6 @@ async function logoutUser() {
   }
 
   localStorage.clear();
-  alert("Logged out!");
   location.reload();
 }
 
