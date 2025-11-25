@@ -6,7 +6,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "node server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "start": "node server.js",
+    "render-build": "./.render-build.sh"
   },
   "keywords": [],
   "author": "Kevin Salas",

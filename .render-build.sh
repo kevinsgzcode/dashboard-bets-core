@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-set -e
+set -o errexit
 
-curl -fsSL https://get.pnpm.io/install.sh | sh -
+# Install pnpm
+corepack enable
+corepack prepare pnpm@10.17.1 --activate
 
-export PNPM_HOME="$HOME/.local/share/pnpm"
-export PATH="$PNPM_HOME:$PATH"
-
-pnpm install --prod
+# Install dependencies
+pnpm install --frozen-lockfile
