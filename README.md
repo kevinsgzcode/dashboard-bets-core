@@ -11,11 +11,6 @@ Unlike typical portfolio projects built with create-react-app, **Bets Core was a
 
 **Why?** To master the fundamentals of software engineering—DOM manipulation, state management, and RESTful routing—without the abstraction layers of frameworks. This project demonstrates a deep understanding of how web applications work under the hood before migrating to libraries like React.
 
-### 🖼️ Preview
-*(Add your 'dashboard1.png' or GIF here)*
-![Dashboard Overview](./assets/dashboard-preview.png)
-
----
 
 ## ✨ Key Features
 
